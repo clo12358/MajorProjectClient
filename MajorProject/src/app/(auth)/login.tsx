@@ -1,12 +1,15 @@
 import { Link, router } from "expo-router";
 import { useMemo, useState } from "react";
-import { Text, View } from "react-native";
+import { Text, useColorScheme, View } from "react-native";
 
 import { Button } from "../../components/ui/button";
-import { Card } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
+import { Colors } from "../../constants/theme";
 
 export default function Login() {
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? "light"];
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -19,81 +22,102 @@ export default function Login() {
   }
 
   return (
-    <View className="flex-1 bg-slate-50">
-      {/* Header */}
-      <View className="bg-blue-600 px-6 pt-16 pb-12">
-        <View className="max-w-md self-center w-full">
-          <Text className="text-3xl font-extrabold text-white">Mira</Text>
-          <Text className="mt-2 text-base text-white/90">
-            Welcome back — sign in to continue
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
+      <View className="px-7 pt-12">
+        <View className="items-center mt-10 mb-10">
+          <Text
+            className="mt-4 text-5xl font-extrabold"
+            style={{ color: theme.primary }}
+          >
+            Mira
           </Text>
         </View>
-      </View>
 
-      {/* Content */}
-      <View className="flex-1 px-6 mt-6">
-        <Card className="w-full max-w-md self-center rounded-3xl p-6 gap-5 bg-white shadow-md border border-slate-200">
-          <View className="gap-1">
-            <Text className="text-xl font-bold text-slate-900">Sign in</Text>
-            <Text className="text-sm text-slate-500">
-              Enter your details below.
-            </Text>
-          </View>
-
+        {/* Form */}
+        <View className="gap-5">
           {/* Email */}
           <View className="gap-2">
-            <Text className="text-sm font-semibold text-slate-700">Email</Text>
-            <Input
-              placeholder="you@example.com"
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-            />
+            <Text
+              className="text-sm font-semibold"
+              style={{ color: theme.text }}
+            >
+              Email
+            </Text>
+
+            <View
+              className="rounded-2xl px-4 py-2 border"
+              style={{
+                backgroundColor: theme.backgroundElement,
+                borderColor: theme.backgroundSelected,
+              }}
+            >
+              <Input
+                placeholder="you@example.com"
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                className="border-0 bg-transparent"
+              />
+            </View>
           </View>
 
           {/* Password */}
           <View className="gap-2">
-            <View className="flex-row justify-between items-center">
-              <Text className="text-sm font-semibold text-slate-700">
-                Password
-              </Text>
-              {/* 
-              <Pressable>
-                <Text className="text-sm text-blue-600 font-semibold">
-                  Forgot?
-                </Text>
-              </Pressable> */}
-            </View>
+            <Text
+              className="text-sm font-semibold"
+              style={{ color: theme.text }}
+            >
+              Password
+            </Text>
 
-            <Input
-              placeholder="••••••••"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
+            <View
+              className="rounded-2xl px-4 py-2 border"
+              style={{
+                backgroundColor: theme.backgroundElement,
+                borderColor: theme.backgroundSelected,
+              }}
+            >
+              <Input
+                placeholder="••••••••"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                className="border-0 bg-transparent"
+              />
+            </View>
           </View>
 
           {/* Button */}
           <Button
-            className="w-full rounded-2xl py-4 bg-blue-600"
+            className="w-full rounded-2xl py-4"
+            style={{ backgroundColor: theme.primary }}
             onPress={handleLogin}
             disabled={!canSubmit}
           >
-            <Text className="text-white font-semibold text-base">Sign in</Text>
+            <Text
+              className="font-semibold text-base"
+              style={{ color: theme.text }}
+            >
+              Log In
+            </Text>
           </Button>
 
-          {/* Register */}
-          <Text className="text-sm text-slate-600 text-center">
+          {/* Register link */}
+          <Text
+            className="text-sm text-center"
+            style={{ color: theme.textSecondary }}
+          >
             Don’t have an account?{" "}
             <Link
               href="/(auth)/register"
-              className="text-blue-600 font-semibold"
+              className="font-semibold"
+              style={{ color: theme.primary }}
             >
-              Register
+              Create one
             </Link>
           </Text>
-        </Card>
+        </View>
       </View>
     </View>
   );
