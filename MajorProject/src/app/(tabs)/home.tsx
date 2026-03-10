@@ -136,7 +136,9 @@ export default function Home() {
                 onPress={() => setSelectedFeeling(feeling)}
                 className="rounded-full px-4 py-2"
                 style={{
-                  backgroundColor: isSelected ? "#abbed4" : theme.secondary,
+                  backgroundColor: isSelected
+                    ? theme.secondaryPressed
+                    : theme.secondary,
                 }}
               >
                 <Text className="text-xs" style={{ color: theme.text }}>

@@ -14,8 +14,6 @@ export default function CalendarPage() {
 
   const displayDate = selectedDate ?? todayString;
 
-  const darkerPrimary = "#9FBFBE";
-
   function formatDate(dateString: string) {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-GB", {
@@ -92,7 +90,7 @@ export default function CalendarPage() {
               let textColor = theme.text;
 
               if (isSelected) {
-                backgroundColor = darkerPrimary;
+                backgroundColor = theme.primaryPressed;
               } else if (isToday) {
                 backgroundColor = theme.primary;
               }
