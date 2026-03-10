@@ -14,7 +14,7 @@ import { Colors } from "../constants/theme";
 
 export default function Journal() {
   const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
+  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
 
   const [selectedMood, setSelectedMood] = useState("Good");
   const [entry, setEntry] = useState("");
@@ -85,7 +85,7 @@ export default function Journal() {
                   className="h-12 w-12 rounded-full items-center justify-center mb-2"
                   style={{
                     backgroundColor: isSelected
-                      ? theme.primary
+                      ? theme.primaryPressed
                       : theme.background,
                     borderWidth: 1,
                     borderColor: theme.backgroundSelected,

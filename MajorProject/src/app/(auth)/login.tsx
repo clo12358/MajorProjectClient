@@ -1,6 +1,6 @@
 import { Link, router } from "expo-router";
 import { useMemo, useState } from "react";
-import { Text, useColorScheme, View } from "react-native";
+import { Image, Text, useColorScheme, View } from "react-native";
 
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -24,13 +24,16 @@ export default function Login() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
       <View className="px-7 pt-12">
-        <View className="items-center mt-10 mb-10">
-          <Text
-            className="mt-4 text-5xl font-extrabold"
-            style={{ color: theme.primary }}
-          >
-            Mira
-          </Text>
+        {/* Logo */}
+        <View className="items-center mt-1 mb-1">
+          <Image
+            source={require("../../assets/logo.png")}
+            style={{
+              width: 400,
+              height: 400,
+              resizeMode: "contain",
+            }}
+          />
         </View>
 
         {/* Form */}
