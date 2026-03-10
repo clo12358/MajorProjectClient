@@ -8,7 +8,7 @@ import { Colors } from "../../constants/theme";
 
 export default function Login() {
   const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
+  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

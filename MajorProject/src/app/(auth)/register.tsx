@@ -8,7 +8,7 @@ import { Colors } from "../../constants/theme";
 
 export default function Register() {
   const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
+  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");

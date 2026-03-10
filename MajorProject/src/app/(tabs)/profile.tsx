@@ -7,7 +7,7 @@ import { Colors } from "../../constants/theme";
 
 export default function Profile() {
   const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
+  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
 
   const [notifications, setNotifications] = useState(true);
   const [appearance, setAppearance] = useState(false);
@@ -70,6 +70,7 @@ export default function Profile() {
           <Pressable
             className="mt-4 rounded-2xl py-3 items-center"
             style={{ backgroundColor: theme.primary }}
+            onPress={() => router.push("/edit-profile")}
           >
             <Text className="font-semibold" style={{ color: theme.text }}>
               Edit Profile
@@ -79,21 +80,13 @@ export default function Profile() {
 
         {/* Quote Card */}
         <View
-          className="mt-5 rounded-3xl overflow-hidden border"
-          style={rowBorderStyle}
+          className="mt-5 rounded-3xl overflow-hidden"
+          style={{ backgroundColor: theme.secondary }}
         >
-          <View className="p-5" style={{ backgroundColor: theme.accent }}>
-            <View
-              className="rounded-2xl p-4"
-              style={{ backgroundColor: theme.accent }}
-            >
-              <Text
-                className="text-center italic"
-                style={{ color: theme.text }}
-              >
-                “Enjoy the process.”
-              </Text>
-            </View>
+          <View className="px-5 py-6" style={{ backgroundColor: theme.accent }}>
+            <Text className="text-center italic" style={{ color: theme.text }}>
+              "Enjoy the process. The results will come."
+            </Text>
           </View>
         </View>
 

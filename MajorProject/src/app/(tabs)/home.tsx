@@ -1,5 +1,12 @@
 import { router } from "expo-router";
-import { ScrollView, Text, useColorScheme, View } from "react-native";
+import { useState } from "react";
+import {
+  Pressable,
+  ScrollView,
+  Text,
+  useColorScheme,
+  View,
+} from "react-native";
 
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
@@ -7,7 +14,10 @@ import { Colors } from "../../constants/theme";
 
 export default function Home() {
   const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
+  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
+
+  const [selectedFeeling, setSelectedFeeling] = useState<string | null>(null);
+  const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
 
   const today = new Date();
 
@@ -93,21 +103,15 @@ export default function Home() {
       </Card>
 
       {/* Quote card */}
-      <View
-        className="rounded-3xl overflow-hidden mb-4"
-        style={{ backgroundColor: theme.accent }}
-      >
-        <View
-          className="px-5 py-6"
-          style={{ backgroundColor: theme.secondary }}
-        >
+      <View className="rounded-3xl overflow-hidden mb-4">
+        <View className="px-5 py-6" style={{ backgroundColor: theme.accent }}>
           <Text className="text-center italic" style={{ color: theme.text }}>
             “The best is yet to come”
           </Text>
         </View>
       </View>
 
-      {/* Feelings  */}
+      {/* Feelings */}
       <Card
         className="rounded-3xl p-4 mb-4 border"
         style={{
@@ -123,17 +127,24 @@ export default function Home() {
         </Text>
 
         <View className="flex-row flex-wrap gap-2">
-          {feelings.map((feeling) => (
-            <View
-              key={feeling}
-              className="rounded-full px-4 py-2"
-              style={{ backgroundColor: theme.secondary }}
-            >
-              <Text className="text-xs" style={{ color: theme.text }}>
-                {feeling}
-              </Text>
-            </View>
-          ))}
+          {feelings.map((feeling) => {
+            const isSelected = selectedFeeling === feeling;
+
+            return (
+              <Pressable
+                key={feeling}
+                onPress={() => setSelectedFeeling(feeling)}
+                className="rounded-full px-4 py-2"
+                style={{
+                  backgroundColor: isSelected ? "#abbed4" : theme.secondary,
+                }}
+              >
+                <Text className="text-xs" style={{ color: theme.text }}>
+                  {feeling}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
 
         <View className="items-end mt-4">
@@ -164,17 +175,24 @@ export default function Home() {
         </Text>
 
         <View className="flex-row flex-wrap gap-2 mb-4">
-          {periodOptions.map((option) => (
-            <View
-              key={option}
-              className="rounded-full px-4 py-2"
-              style={{ backgroundColor: theme.secondary }}
-            >
-              <Text className="text-xs" style={{ color: theme.text }}>
-                {option}
-              </Text>
-            </View>
-          ))}
+          {periodOptions.map((option) => {
+            const isSelected = selectedPeriod === option;
+
+            return (
+              <Pressable
+                key={option}
+                onPress={() => setSelectedPeriod(option)}
+                className="rounded-full px-4 py-2"
+                style={{
+                  backgroundColor: isSelected ? "#abbed4" : theme.secondary,
+                }}
+              >
+                <Text className="text-xs" style={{ color: theme.text }}>
+                  {option}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
 
         <Button

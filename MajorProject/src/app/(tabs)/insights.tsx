@@ -4,7 +4,7 @@ import { Colors } from "../../constants/theme";
 
 export default function Insights() {
   const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
+  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
 
   const trendData = [
     { month: "Jan", value: 28 },

@@ -6,8 +6,7 @@ import { Colors } from "../../constants/theme";
 
 export default function CalendarPage() {
   const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
-
+  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
   const today = new Date();
   const todayString = today.toISOString().split("T")[0];
 
@@ -31,9 +30,9 @@ export default function CalendarPage() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
       <View className="px-5 pt-8">
-        {/* Info Card */}
+        {/* Cycle Card */}
         <View
-          className="mt-5 rounded-3xl overflow-hidden"
+          className="mt-5 rounded-3xl overflow-hidden mb-4"
           style={{ backgroundColor: theme.accent }}
         >
           <View className="p-4">
