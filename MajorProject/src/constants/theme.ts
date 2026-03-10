@@ -15,6 +15,9 @@ export const Colors = {
     secondaryPressed: "#A8C8E1",
     accent: "#FDDFD8",
 
+    danger: "#FBE3E6",
+    dangerText: "#E11D48",
+
     textSecondary: "#60646C",
   },
 
@@ -24,13 +27,16 @@ export const Colors = {
     backgroundElement: "#1B2121",
     backgroundSelected: "#242C2C",
 
-    primary: "#7FAFAE",
-    primaryPressed: "#5E8F8E",
+    primary: "#5A8F8D",
+    primaryPressed: "#3D7775",
 
-    secondary: "#7FA7C8",
-    secondaryPressed: "#5E86A8",
+    secondary: "#5A7FA6",
+    secondaryPressed: "#405C7F",
 
-    accent: "#CFA29C",
+    accent: "#9E8A80",
+
+    danger: "#3D1F24",
+    dangerText: "#F97B99",
 
     textSecondary: "#A1A8A8",
   },

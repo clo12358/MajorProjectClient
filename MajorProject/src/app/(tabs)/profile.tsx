@@ -30,9 +30,6 @@ export default function Profile() {
     [theme],
   );
 
-  const logoutBg = "#FBE3E6";
-  const logoutText = "#E11D48";
-
   function handleLogout() {
     router.replace("/(auth)/login");
   }
@@ -218,12 +215,16 @@ export default function Profile() {
         {/* Log Out Button */}
         <Pressable
           className="mt-6 rounded-2xl py-4 items-center"
-          style={{ backgroundColor: logoutBg }}
+          style={{ backgroundColor: theme.danger }}
           onPress={handleLogout}
         >
           <View className="flex-row items-center gap-2">
-            <Ionicons name="log-out-outline" size={18} color={logoutText} />
-            <Text className="font-semibold" style={{ color: logoutText }}>
+            <Ionicons
+              name="log-out-outline"
+              size={18}
+              color={theme.dangerText}
+            />
+            <Text className="font-semibold" style={{ color: theme.dangerText }}>
               Log Out
             </Text>
           </View>
