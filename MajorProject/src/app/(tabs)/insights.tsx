@@ -1,6 +1,7 @@
 import { ScrollView, Text, useColorScheme, View } from "react-native";
 
 import { QuoteCard } from "../../components/custom/quote-card";
+import { StatCard } from "../../components/custom/stat-card";
 import { Colors } from "../../constants/theme";
 
 export default function Insights() {
@@ -51,43 +52,8 @@ export default function Insights() {
     >
       {/* Top stats */}
       <View className="flex-row gap-4">
-        <View
-          className="flex-1 rounded-3xl border p-5"
-          style={{
-            backgroundColor: theme.backgroundElement,
-            borderColor: theme.backgroundSelected,
-          }}
-        >
-          <Text className="text-base font-medium" style={{ color: theme.text }}>
-            Avg Cycle
-          </Text>
-          <Text
-            className="mt-2 text-4xl font-light"
-            style={{ color: theme.primary }}
-          >
-            28.5
-          </Text>
-          <Text style={{ color: theme.textSecondary }}>days</Text>
-        </View>
-
-        <View
-          className="flex-1 rounded-3xl border p-5"
-          style={{
-            backgroundColor: theme.backgroundElement,
-            borderColor: theme.backgroundSelected,
-          }}
-        >
-          <Text className="text-base font-medium" style={{ color: theme.text }}>
-            Avg Period
-          </Text>
-          <Text
-            className="mt-2 text-4xl font-light"
-            style={{ color: theme.primary }}
-          >
-            5.2
-          </Text>
-          <Text style={{ color: theme.textSecondary }}>days</Text>
-        </View>
+        <StatCard title="Avg Cycle" value="28.5" label="days" />
+        <StatCard title="Avg Period" value="5.2" label="days" />
       </View>
 
       {/* Quote Card */}
