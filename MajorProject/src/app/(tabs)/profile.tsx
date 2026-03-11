@@ -3,6 +3,8 @@ import { router } from "expo-router";
 import { useMemo, useState } from "react";
 import { Pressable, Switch, Text, useColorScheme, View } from "react-native";
 
+import { LargeButton } from "../../components/custom/large-button";
+import { QuoteCard } from "../../components/custom/quote-card";
 import { Colors } from "../../constants/theme";
 
 export default function Profile() {
@@ -25,11 +27,6 @@ export default function Profile() {
     [theme],
   );
 
-  const rowBorderStyle = useMemo(
-    () => ({ borderColor: theme.backgroundSelected }),
-    [theme],
-  );
-
   function handleLogout() {
     router.replace("/(auth)/login");
   }
@@ -39,7 +36,7 @@ export default function Profile() {
       <View className="px-6 pt-10">
         {/* Profile Card */}
         <View className="rounded-3xl p-5 border" style={cardStyle}>
-          <View className="flex-row items-center gap-4">
+          <View className="flex-row items-center gap-4 mb-3">
             <View
               className="h-14 w-14 rounded-full items-center justify-center"
               style={{ backgroundColor: theme.backgroundSelected }}
@@ -64,27 +61,16 @@ export default function Profile() {
             </View>
           </View>
 
-          <Pressable
-            className="mt-4 rounded-2xl py-3 items-center"
-            style={{ backgroundColor: theme.primary }}
+          {/* Edit Profile Button */}
+          <LargeButton
+            title="Edit Profile"
             onPress={() => router.push("/edit-profile")}
-          >
-            <Text className="font-semibold" style={{ color: theme.text }}>
-              Edit Profile
-            </Text>
-          </Pressable>
+          />
         </View>
 
         {/* Quote Card */}
-        <View
-          className="mt-5 rounded-3xl overflow-hidden"
-          style={{ backgroundColor: theme.secondary }}
-        >
-          <View className="px-5 py-6" style={{ backgroundColor: theme.accent }}>
-            <Text className="text-center italic" style={{ color: theme.text }}>
-              "Enjoy the process. The results will come."
-            </Text>
-          </View>
+        <View className="mt-5">
+          <QuoteCard quote="Enjoy the process. The results will come." />
         </View>
 
         {/* Setting List */}
@@ -117,7 +103,7 @@ export default function Profile() {
                   false: theme.backgroundSelected,
                   true: theme.primary,
                 }}
-                thumbColor={"#ffffff"}
+                thumbColor="#ffffff"
               />
             </View>
           </View>
@@ -146,7 +132,7 @@ export default function Profile() {
                   false: theme.backgroundSelected,
                   true: theme.primary,
                 }}
-                thumbColor={"#ffffff"}
+                thumbColor="#ffffff"
               />
             </View>
           </View>
@@ -213,22 +199,15 @@ export default function Profile() {
         </View>
 
         {/* Log Out Button */}
-        <Pressable
-          className="mt-6 rounded-2xl py-4 items-center"
-          style={{ backgroundColor: theme.danger }}
-          onPress={handleLogout}
-        >
-          <View className="flex-row items-center gap-2">
-            <Ionicons
-              name="log-out-outline"
-              size={18}
-              color={theme.dangerText}
-            />
-            <Text className="font-semibold" style={{ color: theme.dangerText }}>
-              Log Out
-            </Text>
-          </View>
-        </Pressable>
+        <View className="mt-6">
+          <LargeButton
+            title="Log Out"
+            icon="log-out-outline"
+            backgroundColor={theme.danger}
+            textColor={theme.dangerText}
+            onPress={handleLogout}
+          />
+        </View>
 
         <View className="h-10" />
       </View>

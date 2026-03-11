@@ -1,5 +1,6 @@
 import { ScrollView, Text, useColorScheme, View } from "react-native";
 
+import { QuoteCard } from "../../components/custom/quote-card";
 import { Colors } from "../../constants/theme";
 
 export default function Insights() {
@@ -89,16 +90,9 @@ export default function Insights() {
         </View>
       </View>
 
-      {/* Quote card */}
-      <View
-        className="mt-5 rounded-3xl overflow-hidden"
-        style={{ backgroundColor: theme.secondary }}
-      >
-        <View className="px-5 py-6" style={{ backgroundColor: theme.accent }}>
-          <Text className="text-center italic" style={{ color: theme.text }}>
-            "Patterns take time — keep logging."
-          </Text>
-        </View>
+      {/* Quote Card */}
+      <View className="mt-5">
+        <QuoteCard quote="Patterns take time — keep logging." />
       </View>
 
       {/* Trend chart */}

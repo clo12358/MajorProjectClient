@@ -2,7 +2,7 @@ import { Link, router } from "expo-router";
 import { useMemo, useState } from "react";
 import { Image, Text, useColorScheme, View } from "react-native";
 
-import { Button } from "../../components/ui/button";
+import { LargeButton } from "@/components/custom/large-button";
 import { Input } from "../../components/ui/input";
 import { Colors } from "../../constants/theme";
 
@@ -91,20 +91,14 @@ export default function Login() {
             </View>
           </View>
 
-          {/* Button */}
-          <Button
-            className="w-full rounded-2xl py-4"
-            style={{ backgroundColor: theme.primary }}
-            onPress={handleLogin}
-            disabled={!canSubmit}
-          >
-            <Text
-              className="font-semibold text-base"
-              style={{ color: theme.text }}
-            >
-              Log In
-            </Text>
-          </Button>
+          {/* Log In Button */}
+          <View className="mt-6">
+            <LargeButton
+              title="Log In"
+              onPress={handleLogin}
+              // disabled={!canSubmit}
+            />
+          </View>
 
           {/* Register link */}
           <Text

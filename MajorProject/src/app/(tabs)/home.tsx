@@ -9,7 +9,8 @@ import {
   View,
 } from "react-native";
 
-import { Button } from "../../components/ui/button";
+import { LargeButton } from "../../components/custom/large-button";
+import { QuoteCard } from "../../components/custom/quote-card";
 import { Card } from "../../components/ui/card";
 import { Colors } from "../../constants/theme";
 
@@ -160,7 +161,7 @@ export default function Home() {
 
         {/* Day card */}
         <Card
-          className="rounded-3xl p-6 items-center mb-4 border"
+          className="rounded-3xl p-6 items-center border"
           style={{
             backgroundColor: theme.backgroundElement,
             borderColor: theme.backgroundSelected,
@@ -174,18 +175,14 @@ export default function Home() {
           </Text>
         </Card>
 
-        {/* Quote card */}
-        <View className="rounded-3xl overflow-hidden mb-4">
-          <View className="px-5 py-6" style={{ backgroundColor: theme.accent }}>
-            <Text className="text-center italic" style={{ color: theme.text }}>
-              “The best is yet to come”
-            </Text>
-          </View>
+        {/* Quote Card */}
+        <View className="mt-5">
+          <QuoteCard quote="The best is yet to come" />
         </View>
 
         {/* Feelings */}
         <Card
-          className="rounded-3xl p-4 mb-4 border"
+          className="rounded-3xl p-4 mb-4 mt-5 border"
           style={{
             backgroundColor: theme.backgroundElement,
             borderColor: theme.backgroundSelected,
@@ -272,17 +269,7 @@ export default function Home() {
             })}
           </View>
 
-          <Button
-            className="w-full rounded-2xl py-4"
-            style={{ backgroundColor: theme.primary }}
-          >
-            <Text
-              className="font-semibold text-base"
-              style={{ color: theme.text }}
-            >
-              Log Period
-            </Text>
-          </Button>
+          <LargeButton title="Log Period" />
         </Card>
 
         {/* Journal */}
@@ -309,18 +296,10 @@ export default function Home() {
             Today I felt more energized than usual. Took a nice walk...
           </Text>
 
-          <Button
-            className="w-full rounded-2xl py-4"
-            style={{ backgroundColor: theme.primary }}
+          <LargeButton
+            title="Open Journal"
             onPress={() => router.push("/journal")}
-          >
-            <Text
-              className="font-semibold text-base"
-              style={{ color: theme.text }}
-            >
-              Open Journal
-            </Text>
-          </Button>
+          />
         </Card>
       </ScrollView>
 
@@ -424,21 +403,13 @@ export default function Home() {
                 </View>
               ))}
 
-              <Button
-                className="w-full rounded-2xl py-4 mt-4"
-                style={{ backgroundColor: theme.primary }}
+              <LargeButton
+                title="Done"
                 onPress={() => {
                   setShowSymptomsModal(false);
                   setSelectedSymptoms([]);
                 }}
-              >
-                <Text
-                  className="font-semibold text-base"
-                  style={{ color: theme.text }}
-                >
-                  Done
-                </Text>
-              </Button>
+              />
             </ScrollView>
           </View>
         </View>

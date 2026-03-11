@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 
+import { LargeButton } from "../components/custom/large-button";
 import { Colors } from "../constants/theme";
 
 export default function Journal() {
@@ -135,21 +136,11 @@ export default function Journal() {
       </View>
 
       {/* Save button */}
-      <Pressable
+      <LargeButton
+        title="Save Entry"
+        icon="document-text-outline"
         onPress={handleSave}
-        className="rounded-2xl py-4 items-center mb-2"
-        style={{ backgroundColor: theme.primary }}
-      >
-        <View className="flex-row items-center gap-2">
-          <Ionicons name="document-text-outline" size={16} color={theme.text} />
-          <Text
-            className="font-semibold text-base"
-            style={{ color: theme.text }}
-          >
-            Save Entry
-          </Text>
-        </View>
-      </Pressable>
+      />
     </ScrollView>
   );
 }
