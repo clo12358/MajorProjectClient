@@ -1,10 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useMemo, useState } from "react";
-import { Pressable, Switch, Text, useColorScheme, View } from "react-native";
+import { Text, useColorScheme, View } from "react-native";
 
 import { LargeButton } from "../../components/custom/large-button";
 import { QuoteCard } from "../../components/custom/quote-card";
+import { SettingsRow } from "../../components/custom/settings-row";
 import { Colors } from "../../constants/theme";
 
 export default function Profile() {
@@ -61,7 +62,6 @@ export default function Profile() {
             </View>
           </View>
 
-          {/* Edit Profile Button */}
           <LargeButton
             title="Edit Profile"
             onPress={() => router.push("/edit-profile")}
@@ -75,127 +75,40 @@ export default function Profile() {
 
         {/* Setting List */}
         <View className="mt-5 gap-4">
-          {/* Notifications row */}
-          <View className="rounded-2xl border p-4" style={cardStyle}>
-            <View className="flex-row items-center">
-              <View
-                className="h-9 w-9 rounded-xl items-center justify-center mr-3"
-                style={{ backgroundColor: theme.backgroundSelected }}
-              >
-                <Ionicons
-                  name="notifications-outline"
-                  size={18}
-                  color={theme.text}
-                />
-              </View>
+          {/* Notifications */}
+          <SettingsRow
+            title="Notifications"
+            icon="notifications-outline"
+            type="switch"
+            value={notifications}
+            onValueChange={setNotifications}
+          />
 
-              <Text
-                className="flex-1 font-semibold"
-                style={{ color: theme.text }}
-              >
-                Notifications
-              </Text>
+          {/* Appearance */}
+          <SettingsRow
+            title="Appearance"
+            icon="sunny-outline"
+            type="switch"
+            value={appearance}
+            onValueChange={setAppearance}
+          />
 
-              <Switch
-                value={notifications}
-                onValueChange={setNotifications}
-                trackColor={{
-                  false: theme.backgroundSelected,
-                  true: theme.primary,
-                }}
-                thumbColor="#ffffff"
-              />
-            </View>
-          </View>
+          {/* Privacy & Data */}
+          <SettingsRow
+            title="Privacy & Data"
+            subtitle="Manage your data"
+            icon="shield-checkmark-outline"
+            type="link"
+            onPress={() => {}}
+          />
 
-          {/* Appearance row */}
-          <View className="rounded-2xl border p-4" style={cardStyle}>
-            <View className="flex-row items-center">
-              <View
-                className="h-9 w-9 rounded-xl items-center justify-center mr-3"
-                style={{ backgroundColor: theme.backgroundSelected }}
-              >
-                <Ionicons name="sunny-outline" size={18} color={theme.text} />
-              </View>
-
-              <Text
-                className="flex-1 font-semibold"
-                style={{ color: theme.text }}
-              >
-                Appearance
-              </Text>
-
-              <Switch
-                value={appearance}
-                onValueChange={setAppearance}
-                trackColor={{
-                  false: theme.backgroundSelected,
-                  true: theme.primary,
-                }}
-                thumbColor="#ffffff"
-              />
-            </View>
-          </View>
-
-          {/* Privacy & Data row */}
-          <Pressable className="rounded-2xl border p-4" style={cardStyle}>
-            <View className="flex-row items-center">
-              <View
-                className="h-9 w-9 rounded-xl items-center justify-center mr-3"
-                style={{ backgroundColor: theme.backgroundSelected }}
-              >
-                <Ionicons
-                  name="shield-checkmark-outline"
-                  size={18}
-                  color={theme.text}
-                />
-              </View>
-
-              <View className="flex-1">
-                <Text className="font-semibold" style={{ color: theme.text }}>
-                  Privacy & Data
-                </Text>
-                <Text className="text-xs mt-0.5" style={subtleTextStyle}>
-                  Manage your data
-                </Text>
-              </View>
-
-              <Ionicons
-                name="chevron-forward"
-                size={18}
-                color={theme.textSecondary}
-              />
-            </View>
-          </Pressable>
-
-          {/* Export Data row */}
-          <Pressable className="rounded-2xl border p-4" style={cardStyle}>
-            <View className="flex-row items-center">
-              <View
-                className="h-9 w-9 rounded-xl items-center justify-center mr-3"
-                style={{ backgroundColor: theme.backgroundSelected }}
-              >
-                <Ionicons
-                  name="download-outline"
-                  size={18}
-                  color={theme.text}
-                />
-              </View>
-
-              <Text
-                className="flex-1 font-semibold"
-                style={{ color: theme.text }}
-              >
-                Export Data
-              </Text>
-
-              <Ionicons
-                name="chevron-forward"
-                size={18}
-                color={theme.textSecondary}
-              />
-            </View>
-          </Pressable>
+          {/* Export Data */}
+          <SettingsRow
+            title="Export Data"
+            icon="download-outline"
+            type="link"
+            onPress={() => {}}
+          />
         </View>
 
         {/* Log Out Button */}

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Pressable, Text, useColorScheme, View } from "react-native";
 import { Calendar } from "react-native-calendars";
 
+import { InfoCard } from "../../components/custom/info-card";
 import { Colors } from "../../constants/theme";
 
 export default function CalendarPage() {
@@ -29,25 +30,8 @@ export default function CalendarPage() {
     <View style={{ flex: 1, backgroundColor: theme.background }}>
       <View className="px-5 pt-8">
         {/* Cycle Card */}
-        <View
-          className="mt-5 rounded-3xl overflow-hidden mb-4"
-          style={{ backgroundColor: theme.accent }}
-        >
-          <View className="p-4">
-            <View
-              className="rounded-2xl px-4 py-4"
-              style={{
-                backgroundColor: theme.accent,
-              }}
-            >
-              <Text
-                className="text-2xl font-semibold"
-                style={{ color: theme.text }}
-              >
-                Cycle Day 14
-              </Text>
-            </View>
-          </View>
+        <View className="mt-5 mb-4">
+          <InfoCard title="Cycle Day 14" />
         </View>
 
         {/* Calendar Card */}
@@ -147,31 +131,11 @@ export default function CalendarPage() {
         </View>
 
         {/* Info Card */}
-        <View
-          className="mt-5 rounded-3xl overflow-hidden"
-          style={{ backgroundColor: theme.accent }}
-        >
-          <View className="p-4">
-            <View
-              className="rounded-2xl px-4 py-4"
-              style={{
-                backgroundColor: theme.accent,
-              }}
-            >
-              <Text
-                className="text-2xl font-semibold"
-                style={{ color: theme.text }}
-              >
-                {infoTitle}
-              </Text>
-              <Text
-                className="mt-1 text-base"
-                style={{ color: theme.textSecondary }}
-              >
-                You haven’t added anything for this date
-              </Text>
-            </View>
-          </View>
+        <View className="mt-5">
+          <InfoCard
+            title={infoTitle}
+            subtitle="You haven’t added anything for this date"
+          />
         </View>
       </View>
     </View>

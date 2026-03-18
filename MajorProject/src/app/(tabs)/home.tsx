@@ -10,7 +10,9 @@ import {
 } from "react-native";
 
 import { LargeButton } from "../../components/custom/large-button";
+import { PillButton } from "../../components/custom/pill-button";
 import { QuoteCard } from "../../components/custom/quote-card";
+import { SectionCard } from "../../components/custom/section-card";
 import { Card } from "../../components/ui/card";
 import { Colors } from "../../constants/theme";
 
@@ -181,126 +183,82 @@ export default function Home() {
         </View>
 
         {/* Feelings */}
-        <Card
-          className="rounded-3xl p-4 mb-4 mt-5 border"
-          style={{
-            backgroundColor: theme.backgroundElement,
-            borderColor: theme.backgroundSelected,
-          }}
-        >
-          <Text
-            className="text-lg font-semibold mb-3"
-            style={{ color: theme.text }}
-          >
-            How are you feeling?
-          </Text>
+        <View className="mt-5">
+          <SectionCard title="How are you feeling?">
+            <View className="flex-row flex-wrap gap-2">
+              {feelings.map((feeling) => {
+                const isSelected = selectedFeeling === feeling;
 
-          <View className="flex-row flex-wrap gap-2">
-            {feelings.map((feeling) => {
-              const isSelected = selectedFeeling === feeling;
+                return (
+                  <PillButton
+                    key={feeling}
+                    label={feeling}
+                    selected={isSelected}
+                    onPress={() => setSelectedFeeling(feeling)}
+                  />
+                );
+              })}
+            </View>
 
-              return (
-                <Pressable
-                  key={feeling}
-                  onPress={() => setSelectedFeeling(feeling)}
-                  className="rounded-full px-4 py-2"
-                  style={{
-                    backgroundColor: isSelected
-                      ? theme.secondaryPressed
-                      : theme.secondary,
-                  }}
-                >
-                  <Text className="text-xs" style={{ color: theme.text }}>
-                    {feeling}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-
-          <View className="items-end mt-4">
-            <Pressable
-              className="rounded-full px-4 py-2"
-              style={{ backgroundColor: theme.primary }}
-              onPress={() => setShowSymptomsModal(true)}
-            >
-              <Text className="text-xs" style={{ color: theme.text }}>
-                Log more...
-              </Text>
-            </Pressable>
-          </View>
-        </Card>
+            <View className="items-end mt-4">
+              <Pressable
+                className="rounded-full px-4 py-2"
+                style={{ backgroundColor: theme.primary }}
+                onPress={() => setShowSymptomsModal(true)}
+              >
+                <Text className="text-xs" style={{ color: theme.text }}>
+                  Log more...
+                </Text>
+              </Pressable>
+            </View>
+          </SectionCard>
+        </View>
 
         {/* Period Tracking */}
-        <Card
-          className="rounded-3xl p-4 mb-4 border"
-          style={{
-            backgroundColor: theme.backgroundElement,
-            borderColor: theme.backgroundSelected,
-          }}
-        >
-          <Text
-            className="text-lg font-semibold mb-3"
-            style={{ color: theme.text }}
-          >
-            Period Tracking
-          </Text>
+        <View className="mt-4">
+          <SectionCard title="Period Tracking">
+            <View className="flex-row flex-wrap gap-2 mb-4">
+              {periodOptions.map((option) => {
+                const isSelected = selectedPeriod === option;
 
-          <View className="flex-row flex-wrap gap-2 mb-4">
-            {periodOptions.map((option) => {
-              const isSelected = selectedPeriod === option;
+                return (
+                  <PillButton
+                    key={option}
+                    label={option}
+                    selected={isSelected}
+                    onPress={() => setSelectedPeriod(option)}
+                  />
+                );
+              })}
+            </View>
 
-              return (
-                <Pressable
-                  key={option}
-                  onPress={() => setSelectedPeriod(option)}
-                  className="rounded-full px-4 py-2"
-                  style={{
-                    backgroundColor: isSelected
-                      ? theme.secondaryPressed
-                      : theme.secondary,
-                  }}
-                >
-                  <Text className="text-xs" style={{ color: theme.text }}>
-                    {option}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-
-          <LargeButton title="Log Period" />
-        </Card>
+            <LargeButton title="Log Period" />
+          </SectionCard>
+        </View>
 
         {/* Journal */}
-        <Card
-          className="rounded-3xl p-4 border"
-          style={{
-            backgroundColor: theme.backgroundElement,
-            borderColor: theme.backgroundSelected,
-          }}
-        >
-          <View className="flex-row items-center justify-between mb-3">
+        <View className="mt-4">
+          <SectionCard
+            title="Journal"
+            rightContent={
+              <Text className="text-xs" style={{ color: theme.textSecondary }}>
+                Latest Entry
+              </Text>
+            }
+          >
             <Text
-              className="text-lg font-semibold"
-              style={{ color: theme.text }}
+              className="text-sm mb-4"
+              style={{ color: theme.textSecondary }}
             >
-              Journal
+              Today I felt more energized than usual. Took a nice walk...
             </Text>
-            <Text className="text-xs" style={{ color: theme.textSecondary }}>
-              Latest Entry
-            </Text>
-          </View>
 
-          <Text className="text-sm mb-4" style={{ color: theme.textSecondary }}>
-            Today I felt more energized than usual. Took a nice walk...
-          </Text>
-
-          <LargeButton
-            title="Open Journal"
-            onPress={() => router.push("/journal")}
-          />
-        </Card>
+            <LargeButton
+              title="Open Journal"
+              onPress={() => router.push("/journal")}
+            />
+          </SectionCard>
+        </View>
       </ScrollView>
 
       {/* Modal */}
@@ -369,8 +327,10 @@ export default function Home() {
                       const isSelected = selectedSymptoms.includes(symptom);
 
                       return (
-                        <Pressable
+                        <PillButton
                           key={symptom}
+                          label={symptom}
+                          selected={isSelected}
                           onPress={() => {
                             if (isSelected) {
                               setSelectedSymptoms(
@@ -383,20 +343,7 @@ export default function Home() {
                               ]);
                             }
                           }}
-                          className="rounded-full px-4 py-2"
-                          style={{
-                            backgroundColor: isSelected
-                              ? theme.secondaryPressed
-                              : theme.secondary,
-                          }}
-                        >
-                          <Text
-                            className="text-xs"
-                            style={{ color: theme.text }}
-                          >
-                            {symptom}
-                          </Text>
-                        </Pressable>
+                        />
                       );
                     })}
                   </View>

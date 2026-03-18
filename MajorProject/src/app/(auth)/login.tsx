@@ -2,8 +2,8 @@ import { Link, router } from "expo-router";
 import { useMemo, useState } from "react";
 import { Image, Text, useColorScheme, View } from "react-native";
 
+import { FormInput } from "@/components/custom/form-input";
 import { LargeButton } from "@/components/custom/large-button";
-import { Input } from "../../components/ui/input";
 import { Colors } from "../../constants/theme";
 
 export default function Login() {
@@ -38,66 +38,26 @@ export default function Login() {
 
         {/* Form */}
         <View className="gap-5">
-          {/* Email */}
-          <View className="gap-2">
-            <Text
-              className="text-sm font-semibold"
-              style={{ color: theme.text }}
-            >
-              Email
-            </Text>
+          <FormInput
+            label="Email"
+            placeholder="you@example.com"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
 
-            <View
-              className="rounded-2xl px-4 py-2 border"
-              style={{
-                backgroundColor: theme.backgroundElement,
-                borderColor: theme.backgroundSelected,
-              }}
-            >
-              <Input
-                placeholder="you@example.com"
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                className="border-0 bg-transparent"
-              />
-            </View>
-          </View>
-
-          {/* Password */}
-          <View className="gap-2">
-            <Text
-              className="text-sm font-semibold"
-              style={{ color: theme.text }}
-            >
-              Password
-            </Text>
-
-            <View
-              className="rounded-2xl px-4 py-2 border"
-              style={{
-                backgroundColor: theme.backgroundElement,
-                borderColor: theme.backgroundSelected,
-              }}
-            >
-              <Input
-                placeholder="••••••••"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                className="border-0 bg-transparent"
-              />
-            </View>
-          </View>
+          <FormInput
+            label="Password"
+            placeholder="••••••••"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+          />
 
           {/* Log In Button */}
           <View className="mt-6">
-            <LargeButton
-              title="Log In"
-              onPress={handleLogin}
-              // disabled={!canSubmit}
-            />
+            <LargeButton title="Log In" onPress={handleLogin} />
           </View>
 
           {/* Register link */}

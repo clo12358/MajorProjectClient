@@ -2,8 +2,8 @@ import { Link, router } from "expo-router";
 import { useMemo, useState } from "react";
 import { Image, Text, useColorScheme, View } from "react-native";
 
+import { FormInput } from "@/components/custom/form-input";
 import { LargeButton } from "@/components/custom/large-button";
-import { Input } from "../../components/ui/input";
 import { Colors } from "../../constants/theme";
 
 export default function Register() {
@@ -43,91 +43,34 @@ export default function Register() {
 
         {/* Form */}
         <View className="gap-5">
-          {/* Name */}
-          <View className="gap-2">
-            <Text
-              className="text-sm font-semibold"
-              style={{ color: theme.text }}
-            >
-              Name
-            </Text>
+          <FormInput
+            label="Name"
+            placeholder="Your name"
+            value={name}
+            onChangeText={setName}
+            autoCapitalize="words"
+          />
 
-            <View
-              className="rounded-2xl px-4 py-2 border"
-              style={{
-                backgroundColor: theme.backgroundElement,
-                borderColor: theme.backgroundSelected,
-              }}
-            >
-              <Input
-                placeholder="Your name"
-                value={name}
-                onChangeText={setName}
-                className="border-0 bg-transparent"
-              />
-            </View>
-          </View>
+          <FormInput
+            label="Email"
+            placeholder="you@example.com"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
 
-          {/* Email */}
-          <View className="gap-2">
-            <Text
-              className="text-sm font-semibold"
-              style={{ color: theme.text }}
-            >
-              Email
-            </Text>
+          <FormInput
+            label="Password"
+            placeholder="••••••••"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+          />
 
-            <View
-              className="rounded-2xl px-4 py-2 border"
-              style={{
-                backgroundColor: theme.backgroundElement,
-                borderColor: theme.backgroundSelected,
-              }}
-            >
-              <Input
-                placeholder="you@example.com"
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                className="border-0 bg-transparent"
-              />
-            </View>
-          </View>
-
-          {/* Password */}
-          <View className="gap-2">
-            <Text
-              className="text-sm font-semibold"
-              style={{ color: theme.text }}
-            >
-              Password
-            </Text>
-
-            <View
-              className="rounded-2xl px-4 py-2 border"
-              style={{
-                backgroundColor: theme.backgroundElement,
-                borderColor: theme.backgroundSelected,
-              }}
-            >
-              <Input
-                placeholder="••••••••"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                className="border-0 bg-transparent"
-              />
-            </View>
-          </View>
-
-          {/* Log In Button */}
+          {/* Create Account Button */}
           <View className="mt-6">
-            <LargeButton
-              title="Create Account"
-              onPress={handleRegister}
-              // disabled={!canSubmit}
-            />
+            <LargeButton title="Create Account" onPress={handleRegister} />
           </View>
 
           {/* Login Link */}
