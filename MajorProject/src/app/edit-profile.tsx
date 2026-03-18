@@ -3,16 +3,16 @@ import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
-  Image,
   Pressable,
   ScrollView,
   Text,
-  TextInput,
   useColorScheme,
   View,
 } from "react-native";
 
-import { Button } from "../components/ui/button";
+import { FormInput } from "../components/custom/form-input";
+import { LargeButton } from "../components/custom/large-button";
+import { ProfileImageCard } from "../components/custom/profile-image-card";
 import { Colors } from "../constants/theme";
 
 export default function EditProfile() {
@@ -53,7 +53,6 @@ export default function EditProfile() {
       showsVerticalScrollIndicator={false}
     >
       <View className="flex-row items-center justify-between mb-6">
-        {/* Left side */}
         <View className="flex-row items-center">
           <Pressable onPress={() => router.back()} className="mr-3">
             <Ionicons name="arrow-back" size={24} color={theme.text} />
@@ -64,7 +63,6 @@ export default function EditProfile() {
           </Text>
         </View>
 
-        {/* Delete account */}
         <Pressable onPress={() => console.log("Delete account pressed")}>
           <Text
             className="text-sm font-semibold underline"
@@ -75,161 +73,45 @@ export default function EditProfile() {
         </Pressable>
       </View>
 
-      <View
-        className="rounded-3xl border p-5 mb-5 items-center"
-        style={{
-          backgroundColor: theme.backgroundElement,
-          borderColor: theme.backgroundSelected,
-        }}
-      >
-        <Pressable onPress={handlePickImage} className="items-center">
-          {profileImage ? (
-            <Image
-              source={{ uri: profileImage }}
-              style={{
-                width: 96,
-                height: 96,
-                borderRadius: 999,
-                marginBottom: 12,
-              }}
-            />
-          ) : (
-            <View
-              className="h-24 w-24 rounded-full items-center justify-center mb-3"
-              style={{ backgroundColor: theme.backgroundSelected }}
-            >
-              <Ionicons
-                name="person-outline"
-                size={38}
-                color={theme.textSecondary}
-              />
-            </View>
-          )}
-
-          <View
-            className="rounded-full px-4 py-2"
-            style={{ backgroundColor: theme.primary }}
-          >
-            <Text style={{ color: theme.text, fontWeight: "600" }}>
-              Change Profile Image
-            </Text>
-          </View>
-        </Pressable>
-      </View>
+      <ProfileImageCard profileImage={profileImage} onPress={handlePickImage} />
 
       <View className="gap-4">
-        {/* Name */}
-        <View>
-          <Text
-            className="text-sm font-semibold mb-2"
-            style={{ color: theme.text }}
-          >
-            Name (first and last)
-          </Text>
-          <TextInput
-            value={name}
-            onChangeText={setName}
-            placeholder="First name"
-            placeholderTextColor={theme.textSecondary}
-            style={{
-              backgroundColor: theme.backgroundElement,
-              borderColor: theme.backgroundSelected,
-              borderWidth: 1,
-              borderRadius: 18,
-              paddingHorizontal: 16,
-              paddingVertical: 14,
-              color: theme.text,
-            }}
-          />
-        </View>
+        <FormInput
+          label="Name (first and last)"
+          placeholder="First name"
+          value={name}
+          onChangeText={setName}
+          autoCapitalize="words"
+        />
 
-        {/* Date of Birth */}
-        <View>
-          <Text
-            className="text-sm font-semibold mb-2"
-            style={{ color: theme.text }}
-          >
-            Date of Birth
-          </Text>
-          <TextInput
-            value={dateOfBirth}
-            onChangeText={setDateOfBirth}
-            placeholder="YYYY-MM-DD"
-            placeholderTextColor={theme.textSecondary}
-            style={{
-              backgroundColor: theme.backgroundElement,
-              borderColor: theme.backgroundSelected,
-              borderWidth: 1,
-              borderRadius: 18,
-              paddingHorizontal: 16,
-              paddingVertical: 14,
-              color: theme.text,
-            }}
-          />
-        </View>
+        <FormInput
+          label="Date of Birth"
+          placeholder="YYYY-MM-DD"
+          value={dateOfBirth}
+          onChangeText={setDateOfBirth}
+          autoCapitalize="none"
+        />
 
-        {/* Height */}
-        <View>
-          <Text
-            className="text-sm font-semibold mb-2"
-            style={{ color: theme.text }}
-          >
-            Height (cm)
-          </Text>
-          <TextInput
-            value={height}
-            onChangeText={setHeight}
-            placeholder="Height"
-            placeholderTextColor={theme.textSecondary}
-            keyboardType="numeric"
-            style={{
-              backgroundColor: theme.backgroundElement,
-              borderColor: theme.backgroundSelected,
-              borderWidth: 1,
-              borderRadius: 18,
-              paddingHorizontal: 16,
-              paddingVertical: 14,
-              color: theme.text,
-            }}
-          />
-        </View>
+        <FormInput
+          label="Height (cm)"
+          placeholder="Height"
+          value={height}
+          onChangeText={setHeight}
+          keyboardType="numeric"
+        />
 
-        {/* Weight */}
-        <View>
-          <Text
-            className="text-sm font-semibold mb-2"
-            style={{ color: theme.text }}
-          >
-            Weight (kg)
-          </Text>
-          <TextInput
-            value={weight}
-            onChangeText={setWeight}
-            placeholder="Weight"
-            placeholderTextColor={theme.textSecondary}
-            keyboardType="numeric"
-            style={{
-              backgroundColor: theme.backgroundElement,
-              borderColor: theme.backgroundSelected,
-              borderWidth: 1,
-              borderRadius: 18,
-              paddingHorizontal: 16,
-              paddingVertical: 14,
-              color: theme.text,
-            }}
-          />
-        </View>
+        <FormInput
+          label="Weight (kg)"
+          placeholder="Weight"
+          value={weight}
+          onChangeText={setWeight}
+          keyboardType="numeric"
+        />
       </View>
 
-      <Button
-        className="w-full rounded-2xl py-4 mt-6"
-        style={{ backgroundColor: theme.primary }}
-        onPress={handleSave}
-      >
-        <Text className="font-semibold text-base" style={{ color: theme.text }}>
-          Save Changes
-        </Text>
-      </Button>
+      <View className="mt-6">
+        <LargeButton title="Save Changes" onPress={handleSave} />
+      </View>
     </ScrollView>
   );
 }

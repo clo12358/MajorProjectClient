@@ -9,11 +9,13 @@ import {
   View,
 } from "react-native";
 
+import { DateChips } from "../../components/custom/date-chips";
+import { DayCard } from "../../components/custom/day-card";
 import { LargeButton } from "../../components/custom/large-button";
 import { PillButton } from "../../components/custom/pill-button";
 import { QuoteCard } from "../../components/custom/quote-card";
 import { SectionCard } from "../../components/custom/section-card";
-import { Card } from "../../components/ui/card";
+import { SymptomCategorySection } from "../../components/custom/symptom-category";
 import { Colors } from "../../constants/theme";
 
 export default function Home() {
@@ -129,6 +131,14 @@ export default function Home() {
       (today.getTime() - cycleStartDate.getTime()) / (1000 * 60 * 60 * 24),
     ) + 1;
 
+  function toggleSymptom(symptom: string) {
+    if (selectedSymptoms.includes(symptom)) {
+      setSelectedSymptoms(selectedSymptoms.filter((s) => s !== symptom));
+    } else {
+      setSelectedSymptoms([...selectedSymptoms, symptom]);
+    }
+  }
+
   return (
     <>
       <ScrollView
@@ -142,40 +152,10 @@ export default function Home() {
         bounces
       >
         {/* Date chips */}
-        <View className="flex-row justify-between mb-5">
-          {days.map((item) => (
-            <View
-              key={item.fullDate.toISOString()}
-              className="h-8 w-8 rounded-full items-center justify-center"
-              style={{
-                backgroundColor: item.active ? theme.primary : theme.secondary,
-              }}
-            >
-              <Text
-                className="text-xs font-medium"
-                style={{ color: theme.text }}
-              >
-                {item.day}
-              </Text>
-            </View>
-          ))}
-        </View>
+        <DateChips days={days} />
 
         {/* Day card */}
-        <Card
-          className="rounded-3xl p-6 items-center border"
-          style={{
-            backgroundColor: theme.backgroundElement,
-            borderColor: theme.backgroundSelected,
-          }}
-        >
-          <Text className="text-4xl font-bold" style={{ color: theme.primary }}>
-            {formattedToday}
-          </Text>
-          <Text className="mt-2 text-base" style={{ color: theme.text }}>
-            Day {cycleDay} of cycle
-          </Text>
-        </Card>
+        <DayCard date={formattedToday} cycleDay={cycleDay} />
 
         {/* Quote Card */}
         <View className="mt-5">
@@ -303,7 +283,7 @@ export default function Home() {
             </View>
 
             <ScrollView
-              showsVerticalScrollIndicator={true}
+              showsVerticalScrollIndicator
               contentContainerStyle={{ paddingBottom: 20 }}
             >
               <Text
@@ -314,44 +294,17 @@ export default function Home() {
               </Text>
 
               {Object.entries(symptomCategories).map(([category, symptoms]) => (
-                <View key={category} className="mb-6">
-                  <Text
-                    className="text-base font-semibold mb-3"
-                    style={{ color: theme.text }}
-                  >
-                    {category}
-                  </Text>
-
-                  <View className="flex-row flex-wrap gap-2">
-                    {symptoms.map((symptom) => {
-                      const isSelected = selectedSymptoms.includes(symptom);
-
-                      return (
-                        <PillButton
-                          key={symptom}
-                          label={symptom}
-                          selected={isSelected}
-                          onPress={() => {
-                            if (isSelected) {
-                              setSelectedSymptoms(
-                                selectedSymptoms.filter((s) => s !== symptom),
-                              );
-                            } else {
-                              setSelectedSymptoms([
-                                ...selectedSymptoms,
-                                symptom,
-                              ]);
-                            }
-                          }}
-                        />
-                      );
-                    })}
-                  </View>
-                </View>
+                <SymptomCategorySection
+                  key={category}
+                  title={category}
+                  symptoms={symptoms}
+                  selectedSymptoms={selectedSymptoms}
+                  onToggleSymptom={toggleSymptom}
+                />
               ))}
 
               <LargeButton
-                title="Done"
+                title="Save"
                 onPress={() => {
                   setShowSymptomsModal(false);
                   setSelectedSymptoms([]);

@@ -1,4 +1,4 @@
-import { Text, useColorScheme, View } from "react-native";
+import { Text, TextInputProps, useColorScheme, View } from "react-native";
 
 import { Colors } from "../../constants/theme";
 import { Input } from "../ui/input";
@@ -9,7 +9,7 @@ type FormInputProps = {
   value: string;
   onChangeText: (text: string) => void;
   secureTextEntry?: boolean;
-  keyboardType?: "default" | "email-address";
+  keyboardType?: TextInputProps["keyboardType"];
   autoCapitalize?: "none" | "sentences" | "words" | "characters";
 };
 
