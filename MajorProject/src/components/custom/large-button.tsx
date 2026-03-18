@@ -9,6 +9,7 @@ type LargeButtonProps = {
   icon?: keyof typeof Ionicons.glyphMap;
   backgroundColor?: string;
   textColor?: string;
+  disabled?: boolean;
 };
 
 export function LargeButton({
@@ -17,6 +18,7 @@ export function LargeButton({
   icon,
   backgroundColor,
   textColor,
+  disabled,
 }: LargeButtonProps) {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
@@ -27,8 +29,12 @@ export function LargeButton({
   return (
     <Pressable
       className="w-full rounded-2xl py-3 items-center"
-      style={{ backgroundColor: buttonBackgroundColor }}
+      style={{
+        backgroundColor: buttonBackgroundColor,
+        opacity: disabled ? 0.5 : 1,
+      }}
       onPress={onPress}
+      disabled={disabled}
     >
       <View className="flex-row items-center gap-2">
         {icon ? (

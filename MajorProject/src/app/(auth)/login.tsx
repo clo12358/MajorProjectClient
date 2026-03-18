@@ -1,9 +1,11 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Link, router } from "expo-router";
 import { useMemo, useState } from "react";
-import { Image, Text, useColorScheme, View } from "react-native";
+import { Alert, Image, Text, useColorScheme, View } from "react-native";
 
 import { FormInput } from "@/components/custom/form-input";
 import { LargeButton } from "@/components/custom/large-button";
+import api from "@/lib/axios";
 import { Colors } from "../../constants/theme";
 
 export default function Login() {
@@ -12,13 +14,46 @@ export default function Login() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const canSubmit = useMemo(() => {
     return email.trim().length > 0 && password.trim().length > 0;
   }, [email, password]);
 
-  function handleLogin() {
-    router.replace("/(tabs)/home");
+  async function handleLogin() {
+    if (!canSubmit) return;
+
+    setLoading(true);
+    try {
+      const response = await api.post("/login", {
+        email,
+        password,
+      });
+
+      console.log("Login response:", response.data);
+
+      // Uses the saved token from AsyncStorage
+      const token = response.data.token;
+      await AsyncStorage.setItem("auth_token", token);
+
+      router.replace("/(tabs)/home");
+    } catch (error: any) {
+      const errors = error.response?.data?.errors;
+      const message = error.response?.data?.message;
+
+      if (errors) {
+        // Laravel validation error.
+        const firstError = Object.values(errors)[0] as string[];
+        Alert.alert("Login Failed", firstError[0]);
+      } else if (message) {
+        // Laravel auth error.
+        Alert.alert("Login Failed", message);
+      } else {
+        Alert.alert("Error", "Something went wrong. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -55,17 +90,19 @@ export default function Login() {
             secureTextEntry
           />
 
-          {/* Log In Button */}
           <View className="mt-6">
-            <LargeButton title="Log In" onPress={handleLogin} />
+            <LargeButton
+              title={loading ? "Logging in..." : "Log In"}
+              onPress={handleLogin}
+              disabled={!canSubmit || loading}
+            />
           </View>
 
-          {/* Register link */}
           <Text
             className="text-sm text-center"
             style={{ color: theme.textSecondary }}
           >
-            Don’t have an account?{" "}
+            Don't have an account?{" "}
             <Link
               href="/(auth)/register"
               className="font-semibold"
