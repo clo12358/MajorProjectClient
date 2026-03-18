@@ -77,7 +77,7 @@ export default function Register() {
         {/* Form */}
         <View className="gap-5">
           <FormInput
-            label="Name"
+            label="Name (first and last name)"
             placeholder="Your name"
             value={name}
             onChangeText={setName}

@@ -1,8 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -10,6 +14,7 @@ import {
   View,
 } from "react-native";
 
+import api from "@/lib/axios";
 import { FormInput } from "../components/custom/form-input";
 import { LargeButton } from "../components/custom/large-button";
 import { ProfileImageCard } from "../components/custom/profile-image-card";
@@ -20,11 +25,37 @@ export default function EditProfile() {
   const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
 
   const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [name, setName] = useState("Josephine Doe");
-  const [height, setHeight] = useState("162");
-  const [weight, setWeight] = useState("65");
-  const [dateOfBirth, setDateOfBirth] = useState("2001-05-14");
+  const [name, setName] = useState("");
+  const [height, setHeight] = useState("");
+  const [weight, setWeight] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState<Date | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  // This fetches the user data from the API and fills the fields.
+  async function fetchProfile() {
+    try {
+      const response = await api.get("/me");
+      const user = response.data;
+
+      setName(user.name ?? "");
+      setHeight(user.height ? String(user.height) : "");
+      setWeight(user.weight ? String(user.weight) : "");
+      setDateOfBirth(user.dob ? new Date(user.dob) : null);
+      setProfileImage(user.profile_image ?? null);
+    } catch (error) {
+      Alert.alert("Error", "Failed to load profile.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // This is setup to pick and image for the profile picture, but the backend doesn't support uploading yet.
   async function handlePickImage() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
@@ -38,8 +69,60 @@ export default function EditProfile() {
     }
   }
 
-  function handleSave() {
-    router.back();
+  // This takes JavaScript date object and converts it into year, month and day format. Because thats what my backend expects.
+  function formatDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      await api.put("/me", {
+        name,
+        dob: dateOfBirth ? formatDate(dateOfBirth) : null,
+        height: height ? Number(height) : null,
+        weight: weight ? Number(weight) : null,
+      });
+
+      if (Platform.OS === "web") {
+        // Alert.alert callbacks don't work reliably on web
+        // so this navigates directly after the API call succeeds
+        router.replace("/profile");
+      } else {
+        Alert.alert("Success", "Profile updated!", [
+          { text: "OK", onPress: () => router.replace("/profile") },
+        ]);
+      }
+      //This will catch any validation errors from the backend and display the first error message.
+    } catch (error: any) {
+      const errors = error.response?.data?.errors;
+      if (errors) {
+        const firstError = Object.values(errors)[0] as string[];
+        Alert.alert("Validation Error", firstError[0]);
+      } else {
+        Alert.alert("Error", "Failed to save profile. Please try again.");
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: theme.background,
+        }}
+      >
+        <ActivityIndicator size="large" color={theme.primary} />
+      </View>
+    );
   }
 
   return (
@@ -52,12 +135,12 @@ export default function EditProfile() {
       }}
       showsVerticalScrollIndicator={false}
     >
+      {/* heading and delete account button. */}
       <View className="flex-row items-center justify-between mb-6">
         <View className="flex-row items-center">
           <Pressable onPress={() => router.back()} className="mr-3">
             <Ionicons name="arrow-back" size={24} color={theme.text} />
           </Pressable>
-
           <Text className="text-2xl font-bold" style={{ color: theme.text }}>
             Edit Profile
           </Text>
@@ -66,15 +149,13 @@ export default function EditProfile() {
         <Pressable onPress={() => console.log("Delete account pressed")}>
           <Text
             className="text-sm font-semibold underline"
-            style={{ color: "#E11D48" }}
+            style={{ color: theme.dangerText }}
           >
             Delete
           </Text>
         </Pressable>
       </View>
-
       <ProfileImageCard profileImage={profileImage} onPress={handlePickImage} />
-
       <View className="gap-4">
         <FormInput
           label="Name (first and last)"
@@ -84,13 +165,94 @@ export default function EditProfile() {
           autoCapitalize="words"
         />
 
-        <FormInput
-          label="Date of Birth"
-          placeholder="YYYY-MM-DD"
-          value={dateOfBirth}
-          onChangeText={setDateOfBirth}
-          autoCapitalize="none"
-        />
+        {/* Date of Birth Picker */}
+        <View>
+          <Text
+            className="text-sm font-medium mb-1"
+            style={{ color: theme.text }}
+          >
+            Date of Birth
+          </Text>
+
+          {Platform.OS === "web" ? (
+            <input
+              type="date"
+              value={dateOfBirth ? formatDate(dateOfBirth) : ""}
+              max={formatDate(new Date())}
+              onChange={(e) => {
+                if (e.target.value) setDateOfBirth(new Date(e.target.value));
+              }}
+              style={{
+                width: "100%",
+                padding: "14px",
+                borderRadius: "10px",
+                border: `1px solid ${theme.backgroundSelected}`,
+                backgroundColor: theme.backgroundElement,
+                color: theme.text,
+                fontSize: "16px",
+                outline: "none",
+                boxSizing: "border-box",
+              }}
+            />
+          ) : (
+            <>
+              <Pressable
+                onPress={() => setShowDatePicker(true)}
+                style={{
+                  borderWidth: 1,
+                  borderColor: theme.backgroundSelected,
+                  borderRadius: 10,
+                  padding: 14,
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  backgroundColor: theme.backgroundElement,
+                }}
+              >
+                <Text
+                  style={{
+                    color: dateOfBirth ? theme.text : theme.textSecondary,
+                  }}
+                >
+                  {dateOfBirth ? formatDate(dateOfBirth) : "Select date"}
+                </Text>
+                <Ionicons
+                  name="calendar-outline"
+                  size={20}
+                  color={theme.textSecondary}
+                />
+              </Pressable>
+
+              {showDatePicker && (
+                <DateTimePicker
+                  value={dateOfBirth ?? new Date(2000, 0, 1)}
+                  mode="date"
+                  display={Platform.OS === "ios" ? "spinner" : "default"}
+                  maximumDate={new Date()}
+                  onChange={(event, selectedDate) => {
+                    if (Platform.OS === "android") setShowDatePicker(false);
+                    if (selectedDate) setDateOfBirth(selectedDate);
+                  }}
+                />
+              )}
+
+              {showDatePicker && Platform.OS === "ios" && (
+                <Pressable
+                  onPress={() => setShowDatePicker(false)}
+                  style={{
+                    alignSelf: "flex-end",
+                    paddingHorizontal: 16,
+                    paddingVertical: 8,
+                    backgroundColor: theme.primary,
+                    borderRadius: 8,
+                  }}
+                >
+                  <Text style={{ color: "#fff", fontWeight: "600" }}>Done</Text>
+                </Pressable>
+              )}
+            </>
+          )}
+        </View>
 
         <FormInput
           label="Height (cm)"
@@ -108,9 +270,12 @@ export default function EditProfile() {
           keyboardType="numeric"
         />
       </View>
-
       <View className="mt-6">
-        <LargeButton title="Save Changes" onPress={handleSave} />
+        <LargeButton
+          title={saving ? "Saving..." : "Save Changes"}
+          onPress={handleSave}
+          disabled={saving}
+        />
       </View>
     </ScrollView>
   );

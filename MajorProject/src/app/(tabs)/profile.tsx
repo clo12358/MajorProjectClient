@@ -1,12 +1,24 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
-import { useState } from "react";
-import { useColorScheme, View } from "react-native";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, useColorScheme, View } from "react-native";
 
+import api from "@/lib/axios";
 import { LargeButton } from "../../components/custom/large-button";
 import { ProfileCard } from "../../components/custom/profile-card";
 import { QuoteCard } from "../../components/custom/quote-card";
 import { SettingsRow } from "../../components/custom/settings-row";
 import { Colors } from "../../constants/theme";
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  dob: string | null;
+  height: string | null;
+  weight: string | null;
+  profile_image: string | null;
+}
 
 export default function Profile() {
   const colorScheme = useColorScheme();
@@ -14,18 +26,51 @@ export default function Profile() {
 
   const [notifications, setNotifications] = useState(true);
   const [appearance, setAppearance] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  function handleLogout() {
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  async function fetchProfile() {
+    try {
+      const response = await api.get("/me");
+      setUser(response.data);
+    } catch (error) {
+      console.error("Failed to fetch profile:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleLogout() {
+    await AsyncStorage.removeItem("auth_token"); //This removes the saved token when logging out.
     router.replace("/(auth)/login");
+  }
+
+  if (loading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: theme.background,
+        }}
+      >
+        <ActivityIndicator size="large" color={theme.primary} />
+      </View>
+    );
   }
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
       <View className="px-6 pt-10">
-        {/* Profile Card */}
+        {/* Profile Card*/}
         <ProfileCard
-          name="Josephine Doe"
-          email="jdoe@example.com"
+          name={user?.name ?? "Unknown"}
+          email={user?.email ?? "Unknown"}
           buttonTitle="Edit Profile"
           onPressButton={() => router.push("/edit-profile")}
         />
