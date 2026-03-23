@@ -17,7 +17,7 @@ export function QuoteCard({ quote }: QuoteCardProps) {
     >
       <View className="px-5 py-6" style={{ backgroundColor: theme.accent }}>
         <Text className="text-center italic" style={{ color: theme.text }}>
-          "{quote}"
+          {quote}
         </Text>
       </View>
     </View>

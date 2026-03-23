@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost/api", // Every request will be made to this base URL, this makes it so that I dont have to write this every time I want to make a request.
+  baseURL: "http://172.21.240.1/api", // Every request will be made to this base URL, this makes it so that I dont have to write this every time I want to make a request.
   headers: {
     "Content-Type": "application/json", //Sending JSON.
     Accept: "application/json", //Want JSON back.

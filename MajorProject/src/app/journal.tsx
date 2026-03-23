@@ -11,6 +11,7 @@ import {
 } from "react-native";
 
 import { LargeButton } from "../components/custom/large-button";
+import { MoodCard } from "../components/custom/mood-card";
 import { Colors } from "../constants/theme";
 
 export default function Journal() {
@@ -25,6 +26,7 @@ export default function Journal() {
     { label: "Good", icon: "happy-outline" },
     { label: "Okay", icon: "remove-circle-outline" },
     { label: "Low", icon: "sad-outline" },
+    { label: "Awful", icon: "skull-outline" },
   ] as const;
 
   function handleSave() {
@@ -58,58 +60,11 @@ export default function Journal() {
       </View>
 
       {/* Mood card */}
-      <View
-        className="rounded-3xl border p-5 mb-5"
-        style={{
-          backgroundColor: theme.backgroundElement,
-          borderColor: theme.backgroundSelected,
-        }}
-      >
-        <Text
-          className="text-xl font-semibold mb-5"
-          style={{ color: theme.text }}
-        >
-          How are you feeling today?
-        </Text>
-
-        <View className="flex-row justify-between">
-          {moods.map((mood) => {
-            const isSelected = selectedMood === mood.label;
-
-            return (
-              <Pressable
-                key={mood.label}
-                onPress={() => setSelectedMood(mood.label)}
-                className="items-center"
-              >
-                <View
-                  className="h-12 w-12 rounded-full items-center justify-center mb-2"
-                  style={{
-                    backgroundColor: isSelected
-                      ? theme.primaryPressed
-                      : theme.background,
-                    borderWidth: 1,
-                    borderColor: theme.backgroundSelected,
-                  }}
-                >
-                  <Ionicons
-                    name={mood.icon}
-                    size={22}
-                    color={theme.textSecondary}
-                  />
-                </View>
-
-                <Text
-                  className="text-xs"
-                  style={{ color: theme.textSecondary }}
-                >
-                  {mood.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </View>
+      <MoodCard
+        moods={moods}
+        selectedMood={selectedMood}
+        onSelectMood={setSelectedMood}
+      />
 
       {/* Journal input */}
       <View

@@ -28,11 +28,16 @@ export default function Profile() {
   const [appearance, setAppearance] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [quote, setQuote] = useState(
+    "Enjoy the process. The results will come.",
+  );
 
   useEffect(() => {
     fetchProfile();
+    fetchQuote();
   }, []);
 
+  //Connecting API
   async function fetchProfile() {
     try {
       const response = await api.get("/me");
@@ -44,8 +49,20 @@ export default function Profile() {
     }
   }
 
+  async function fetchQuote() {
+    try {
+      const randomId = Math.floor(Math.random() * 1385) + 1;
+      const response = await fetch(`https://dummyjson.com/quotes/${randomId}`);
+      const data = await response.json();
+      setQuote(`"${data.quote}"`);
+    } catch (error) {
+      // silently keep the fallback quote if the fetch fails
+      console.error("Failed to fetch quote:", error);
+    }
+  }
+
   async function handleLogout() {
-    await AsyncStorage.removeItem("auth_token"); //This removes the saved token when logging out.
+    await AsyncStorage.removeItem("auth_token");
     router.replace("/(auth)/login");
   }
 
@@ -67,7 +84,7 @@ export default function Profile() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
       <View className="px-6 pt-10">
-        {/* Profile Card*/}
+        {/* Profile Card */}
         <ProfileCard
           name={user?.name ?? "Unknown"}
           email={user?.email ?? "Unknown"}
@@ -77,7 +94,7 @@ export default function Profile() {
 
         {/* Quote Card */}
         <View className="mt-5">
-          <QuoteCard quote="Enjoy the process. The results will come." />
+          <QuoteCard quote={quote} />
         </View>
 
         {/* Setting List */}

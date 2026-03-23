@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { ScrollView, Text, useColorScheme, View } from "react-native";
 
 import { QuoteCard } from "../../components/custom/quote-card";
@@ -8,6 +9,23 @@ import { Colors } from "../../constants/theme";
 export default function Insights() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
+
+  const [quote, setQuote] = useState("Patterns take time — keep logging.");
+
+  useEffect(() => {
+    fetchQuote();
+  }, []);
+
+  async function fetchQuote() {
+    try {
+      const randomId = Math.floor(Math.random() * 1385) + 1;
+      const response = await fetch(`https://dummyjson.com/quotes/${randomId}`);
+      const data = await response.json();
+      setQuote(`"${data.quote}"`);
+    } catch (error) {
+      console.error("Failed to fetch quote:", error);
+    }
+  }
 
   const trendData = [
     { month: "Jan", value: 28 },
@@ -57,9 +75,9 @@ export default function Insights() {
         <StatCard title="Avg Period" value="5.2" label="days" />
       </View>
 
-      {/* Quote Card */}
+      {/* Quote Card*/}
       <View className="mt-5">
-        <QuoteCard quote="Patterns take time — keep logging." />
+        <QuoteCard quote={quote} />
       </View>
 
       {/* Trend chart */}
