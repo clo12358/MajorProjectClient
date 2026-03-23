@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Link, router } from "expo-router";
 import { useMemo, useState } from "react";
-import { Alert, Image, Text, useColorScheme, View } from "react-native";
+import { Image, Text, useColorScheme, View } from "react-native";
 
 import { FormInput } from "@/components/custom/form-input";
 import { LargeButton } from "@/components/custom/large-button";
@@ -16,6 +16,10 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [nameError, setNameError] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [generalError, setGeneralError] = useState("");
 
   // The useMemo watches the fields and only returns true when all fields have some text in them.
   const canSubmit = useMemo(() => {
@@ -26,10 +30,18 @@ export default function Register() {
     );
   }, [name, email, password]);
 
+  function clearErrors() {
+    setNameError("");
+    setEmailError("");
+    setPasswordError("");
+    setGeneralError("");
+  }
+
   async function handleRegister() {
     if (!canSubmit) return;
     // setLoading(true) prevents user from pressing the button more than once. And shows the "Creating Account..." text on the button.
     setLoading(true);
+    clearErrors();
     //This gets the URL from the lib/axios.ts file and adds the /register endpoint to it.
     try {
       const response = await api.post("/register", {
@@ -47,12 +59,17 @@ export default function Register() {
     } catch (error: any) {
       const errors = error.response?.data?.errors;
 
-      //This checks if there is any errors and returns a message to the user.
+      //This checks if there are any errors and maps them to their specific fields.
       if (errors) {
-        const firstError = Object.values(errors)[0] as string[];
-        Alert.alert("Registration Failed", firstError[0]);
+        if (errors.name) setNameError(errors.name[0]);
+        if (errors.email) setEmailError(errors.email[0]);
+        if (errors.password) setPasswordError(errors.password[0]);
+        // If there are errors not tied to a specific field, show a general error.
+        if (!errors.name && !errors.email && !errors.password) {
+          setGeneralError("Something went wrong. Please try again.");
+        }
       } else {
-        Alert.alert("Error", "Something went wrong. Please try again.");
+        setGeneralError("Something went wrong. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -76,30 +93,84 @@ export default function Register() {
 
         {/* Form */}
         <View className="gap-5">
-          <FormInput
-            label="Name (first and last name)"
-            placeholder="Your name"
-            value={name}
-            onChangeText={setName}
-            autoCapitalize="words"
-          />
+          <View>
+            <FormInput
+              label="Name (first and last name)"
+              placeholder="Your name"
+              value={name}
+              onChangeText={(text) => {
+                setName(text);
+                if (nameError) setNameError("");
+              }}
+              autoCapitalize="words"
+            />
+            {nameError ? (
+              <Text
+                className="text-sm mt-1 ml-1"
+                style={{ color: theme.dangerText ?? "#e53e3e" }}
+              >
+                {nameError}
+              </Text>
+            ) : null}
+          </View>
 
-          <FormInput
-            label="Email"
-            placeholder="you@example.com"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
+          <View>
+            <FormInput
+              label="Email"
+              placeholder="you@example.com"
+              value={email}
+              onChangeText={(text) => {
+                setEmail(text);
+                if (emailError) setEmailError("");
+              }}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            {emailError ? (
+              <Text
+                className="text-sm mt-1 ml-1"
+                style={{ color: theme.dangerText ?? "#e53e3e" }}
+              >
+                {emailError}
+              </Text>
+            ) : null}
+          </View>
 
-          <FormInput
-            label="Password"
-            placeholder="••••••••"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
+          <View>
+            <FormInput
+              label="Password"
+              placeholder="••••••••"
+              value={password}
+              onChangeText={(text) => {
+                setPassword(text);
+                if (passwordError) setPasswordError("");
+              }}
+              secureTextEntry
+            />
+            {passwordError ? (
+              <Text
+                className="text-sm mt-1 ml-1"
+                style={{ color: theme.dangerText ?? "#e53e3e" }}
+              >
+                {passwordError}
+              </Text>
+            ) : null}
+          </View>
+
+          {/* General error */}
+          {generalError ? (
+            <View
+              className="rounded-lg px-4 py-3"
+              style={{ backgroundColor: theme.danger ?? "#fff5f5" }}
+            >
+              <Text
+                className="text-sm"
+                style={{ color: theme.dangerText ?? "#e53e3e" }}
+              >
+                {generalError}
+              </Text>
+            </View>
+          ) : null}
 
           <View className="mt-6">
             <LargeButton

@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, useColorScheme, View } from "react-native";
 
@@ -8,6 +8,7 @@ import { LargeButton } from "../../components/custom/large-button";
 import { ProfileCard } from "../../components/custom/profile-card";
 import { QuoteCard } from "../../components/custom/quote-card";
 import { SettingsRow } from "../../components/custom/settings-row";
+import { Toast } from "../../components/custom/toast";
 import { Colors } from "../../constants/theme";
 
 interface User {
@@ -32,10 +33,22 @@ export default function Profile() {
     "Enjoy the process. The results will come.",
   );
 
+  const { updated } = useLocalSearchParams<{ updated?: string }>();
+  const [showToast, setShowToast] = useState(false);
+
   useEffect(() => {
     fetchProfile();
     fetchQuote();
   }, []);
+
+  // Show the success toast if we were redirected here after a profile update,
+  // then immediately clear the param from the URL so it doesn't re-trigger on reload.
+  useEffect(() => {
+    if (updated === "true") {
+      setShowToast(true);
+      router.setParams({ updated: "" });
+    }
+  }, [updated]);
 
   //Connecting API
   async function fetchProfile() {
@@ -56,7 +69,6 @@ export default function Profile() {
       const data = await response.json();
       setQuote(`"${data.quote}"`);
     } catch (error) {
-      // silently keep the fallback quote if the fetch fails
       console.error("Failed to fetch quote:", error);
     }
   }
@@ -144,6 +156,13 @@ export default function Profile() {
 
         <View className="h-10" />
       </View>
+
+      {/* Success toast */}
+      <Toast
+        message="Profile updated successfully"
+        visible={showToast}
+        onHide={() => setShowToast(false)}
+      />
     </View>
   );
 }

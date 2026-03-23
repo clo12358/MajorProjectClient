@@ -87,15 +87,9 @@ export default function EditProfile() {
         weight: weight ? Number(weight) : null,
       });
 
-      if (Platform.OS === "web") {
-        // Alert.alert callbacks don't work reliably on web
-        // so this navigates directly after the API call succeeds
-        router.replace("/profile");
-      } else {
-        Alert.alert("Success", "Profile updated!", [
-          { text: "OK", onPress: () => router.replace("/profile") },
-        ]);
-      }
+      // Navigate back to profile with a success flag so the profile page can show a success message.
+      router.replace({ pathname: "/profile", params: { updated: "true" } });
+
       //This will catch any validation errors from the backend and display the first error message.
     } catch (error: any) {
       const errors = error.response?.data?.errors;
