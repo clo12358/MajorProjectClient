@@ -51,7 +51,6 @@ export default function Login() {
       if (errors) {
         if (errors.email) {
           const emailErr = errors.email[0];
-          // Laravel sometimes puts "credentials incorrect" under errors.email
           if (
             emailErr.toLowerCase().includes("credentials") ||
             emailErr.toLowerCase().includes("incorrect")
@@ -138,7 +137,7 @@ export default function Login() {
             ) : null}
           </View>
 
-          {/* General error (wrong email/password combo) */}
+          {/* General error */}
           {generalError ? (
             <View
               className="rounded-lg px-4 py-3"
