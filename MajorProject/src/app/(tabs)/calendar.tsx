@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useColorScheme, View } from "react-native";
+import { ScrollView, useColorScheme, View } from "react-native";
 
 import api from "@/lib/axios";
 import { CalendarCard } from "../../components/custom/calendar-card";
@@ -12,8 +12,6 @@ interface Period {
   cycle_id: number;
   start_date: string;
   end_date: string | null;
-  created_at?: string;
-  updated_at?: string;
 }
 
 interface PeriodDay {
@@ -22,50 +20,52 @@ interface PeriodDay {
   date: string;
   flow: string;
   has_clots: boolean | number;
-  created_at?: string;
-  updated_at?: string;
 }
 
 interface SinglePeriodResponse {
-  id: number;
-  cycle_id: number;
-  start_date: string;
-  end_date: string | null;
-  created_at?: string;
-  updated_at?: string;
-  cycle?: {
-    id: number;
-    user_id: number;
-    start_date: string;
-    end_date: string | null;
-    cycle_length: number | null;
-    created_at?: string;
-    updated_at?: string;
-  };
   days?: PeriodDay[];
 }
 
 interface Cycle {
   id: number;
-  user_id: number;
   start_date: string;
   end_date: string | null;
-  cycle_length: number | null;
-  created_at?: string;
-  updated_at?: string;
-  periods?: Period[];
 }
+
+interface DailySymptom {
+  id: number;
+  symptom?: {
+    id: number;
+    name: string;
+  };
+}
+
+interface DailyLog {
+  id: number;
+  date: string;
+  daily_symptoms?: DailySymptom[];
+}
+
+function formatDateString(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+const todayString = formatDateString(new Date());
 
 export default function CalendarPage() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
-  const today = new Date();
-  const todayString = formatDateString(today);
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [periodDates, setPeriodDates] = useState<string[]>([]);
   const [periodLogsByDate, setPeriodLogsByDate] = useState<
     Record<string, PeriodDay>
+  >({});
+  const [dailyLogsByDate, setDailyLogsByDate] = useState<
+    Record<string, DailyLog>
   >({});
   const [cycleDay, setCycleDay] = useState<number | null>(null);
 
@@ -74,51 +74,36 @@ export default function CalendarPage() {
   useEffect(() => {
     fetchCalendarData();
     fetchCurrentCycle();
+    fetchAllDailyLogs();
   }, []);
 
-  function formatDateString(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  }
-
-  function getDatesInRange(startDate: string, endDate: string) {
+  function getDatesInRange(startDate: string, endDate: string): string[] {
     const dates: string[] = [];
     const current = new Date(`${startDate}T00:00:00`);
     const end = new Date(`${endDate}T00:00:00`);
-
     while (current <= end) {
       dates.push(formatDateString(current));
       current.setDate(current.getDate() + 1);
     }
-
     return dates;
   }
 
-  function getDayDifference(startDate: string, endDate: string) {
+  function getDayDifference(startDate: string, endDate: string): number {
     const start = new Date(`${startDate}T00:00:00`);
     const end = new Date(`${endDate}T00:00:00`);
-    const diffMs = end.getTime() - start.getTime();
-    return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    return Math.floor(
+      (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
+    );
   }
 
   async function fetchCurrentCycle() {
     try {
       const response = await api.get("/cycles");
       const cycles: Cycle[] = response.data ?? [];
-
       const activeCycle = cycles.find((cycle) => cycle.end_date === null);
-
-      if (!activeCycle) {
-        setCycleDay(null);
-        return;
-      }
-
-      const currentCycleDay =
-        getDayDifference(activeCycle.start_date, todayString) + 1;
-
-      setCycleDay(currentCycleDay > 0 ? currentCycleDay : null);
+      if (!activeCycle) return setCycleDay(null);
+      const day = getDayDifference(activeCycle.start_date, todayString) + 1;
+      setCycleDay(day > 0 ? day : null);
     } catch (error) {
       console.error("Failed to fetch cycles:", error);
       setCycleDay(null);
@@ -136,34 +121,23 @@ export default function CalendarPage() {
         return;
       }
 
-      const allMarkedDates: string[] = [];
-
-      periods.forEach((period) => {
-        if (period.end_date) {
-          allMarkedDates.push(
-            ...getDatesInRange(period.start_date, period.end_date),
-          );
-        } else {
-          allMarkedDates.push(period.start_date);
-        }
-      });
-
-      const uniqueMarkedDates = [...new Set(allMarkedDates)].sort();
-      setPeriodDates(uniqueMarkedDates);
+      const allMarkedDates = periods.flatMap((period) =>
+        period.end_date
+          ? getDatesInRange(period.start_date, period.end_date)
+          : [period.start_date],
+      );
+      setPeriodDates([...new Set(allMarkedDates)].sort());
 
       const singlePeriodResponses = await Promise.all(
         periods.map((period) => api.get(`/periods/${period.id}`)),
       );
 
-      const allDays: PeriodDay[] = singlePeriodResponses.flatMap((response) => {
-        const periodData: SinglePeriodResponse = response.data;
-        return periodData.days ?? [];
-      });
-
       const byDate: Record<string, PeriodDay> = {};
-      allDays.forEach((day) => {
-        byDate[day.date] = day;
-      });
+      singlePeriodResponses
+        .flatMap((r) => (r.data as SinglePeriodResponse).days ?? [])
+        .forEach((day) => {
+          byDate[day.date] = day;
+        });
 
       setPeriodLogsByDate(byDate);
     } catch (error) {
@@ -171,71 +145,88 @@ export default function CalendarPage() {
     }
   }
 
-  function formatDate(dateString: string) {
-    const date = new Date(`${dateString}T00:00:00`);
+  async function fetchAllDailyLogs() {
+    try {
+      const response = await api.get("/daily-logs");
+      const logs: DailyLog[] = response.data ?? [];
+      const byDate: Record<string, DailyLog> = {};
+      logs.forEach((log) => {
+        byDate[log.date] = log;
+      });
+      setDailyLogsByDate(byDate);
+    } catch (error) {
+      console.error("Failed to fetch daily logs:", error);
+    }
+  }
+
+  const infoTitle = useMemo(() => {
+    const date = new Date(`${displayDate}T00:00:00`);
     return date.toLocaleDateString("en-GB", {
       weekday: "long",
       month: "long",
       day: "numeric",
     });
-  }
-
-  const infoTitle = useMemo(() => formatDate(displayDate), [displayDate]);
+  }, [displayDate]);
 
   const selectedDayLog = periodLogsByDate[displayDate];
   const isPeriodDate = periodDates.includes(displayDate);
+  const dailyLog = dailyLogsByDate[displayDate];
 
-  function formatFlow(flow?: string, hasClots?: boolean | number) {
-    if (!flow) return null;
+  const symptomNames: string[] =
+    dailyLog?.daily_symptoms
+      ?.map((ds) => ds.symptom?.name)
+      .filter((name): name is string => Boolean(name)) ?? [];
 
-    const capitalisedFlow = flow.charAt(0).toUpperCase() + flow.slice(1);
-
-    if (hasClots) {
-      return `${capitalisedFlow} flow with blood clots`;
+  function getPeriodSubtitle(): string {
+    if (selectedDayLog) {
+      const { flow, has_clots } = selectedDayLog;
+      const capitalised = flow.charAt(0).toUpperCase() + flow.slice(1);
+      return has_clots
+        ? `${capitalised} flow with blood clots`
+        : `${capitalised} flow`;
     }
-
-    return `${capitalisedFlow} flow`;
+    if (isPeriodDate) return "Period recorded for this date";
+    return "You haven't added anything for this date";
   }
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
-      <View className="px-5 pt-8">
-        <View className="mt-5 mb-4">
-          <InfoCard
-            title={cycleDay ? `Cycle Day ${cycleDay}` : "No active cycle"}
-          />
-        </View>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 32 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View className="px-5 pt-8">
+          <View className="mt-5 mb-4">
+            <InfoCard
+              title={cycleDay ? `Cycle Day ${cycleDay}` : "No active cycle"}
+            />
+          </View>
 
-        <CalendarCard
-          todayString={todayString}
-          selectedDate={selectedDate}
-          onSelectDate={setSelectedDate}
-          periodDates={periodDates}
-        />
-
-        <View className="mt-4">
-          <Legend
-            items={[
-              { label: "Today", color: theme.primaryPressed },
-              { label: "Period Day", color: theme.accent },
-            ]}
+          <CalendarCard
+            todayString={todayString}
+            selectedDate={selectedDate}
+            onSelectDate={setSelectedDate}
+            periodDates={periodDates}
           />
-        </View>
 
-        <View className="mt-5">
-          <InfoCard
-            title={infoTitle}
-            subtitle={
-              selectedDayLog
-                ? (formatFlow(selectedDayLog.flow, selectedDayLog.has_clots) ??
-                  "Period logged for this date")
-                : isPeriodDate
-                  ? "Period recorded for this date"
-                  : "You haven’t added anything for this date"
-            }
-          />
+          <View className="mt-4">
+            <Legend
+              items={[
+                { label: "Today", color: theme.primaryPressed },
+                { label: "Period Day", color: theme.accent },
+              ]}
+            />
+          </View>
+
+          <View className="mt-5">
+            <InfoCard
+              title={infoTitle}
+              subtitle={getPeriodSubtitle()}
+              symptoms={symptomNames}
+            />
+          </View>
         </View>
-      </View>
+      </ScrollView>
     </View>
   );
 }

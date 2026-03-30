@@ -27,6 +27,12 @@ const flowMap: Record<string, { flow: string; has_clots: boolean }> = {
   "Blood Clots": { flow: "heavy", has_clots: true },
 };
 
+interface Cycle {
+  id: number;
+  start_date: string;
+  end_date: string | null;
+}
+
 interface Symptom {
   id: number;
   name: string;
@@ -49,6 +55,10 @@ interface DailyLogResponse {
   } | null;
   entry?: string;
   feeling?: string;
+  daily_symptoms?: {
+    symptom_id: number;
+    symptom?: { name: string };
+  }[];
 }
 
 const apiFeelingToLabel: Record<string, string> = {
@@ -63,7 +73,6 @@ export default function Home() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
 
-  const [selectedFeeling, setSelectedFeeling] = useState<number | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
   const [showSymptomsModal, setShowSymptomsModal] = useState(false);
   const [selectedSymptomIds, setSelectedSymptomIds] = useState<number[]>([]);
@@ -72,6 +81,7 @@ export default function Home() {
   const [endingPeriod, setEndingPeriod] = useState(false);
   const [openingJournal, setOpeningJournal] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [savedSymptomNames, setSavedSymptomNames] = useState<string[]>([]);
   const [todayLogId, setTodayLogId] = useState<number | null>(null);
   const [journalPreview, setJournalPreview] = useState("");
   const [journalFeeling, setJournalFeeling] = useState<string | null>(null);
@@ -80,6 +90,7 @@ export default function Home() {
     start_date: string;
     end_date: string | null;
   } | null>(null);
+  const [cycleDay, setCycleDay] = useState<number | null>(null);
   const [quote, setQuote] = useState("The best is yet to come.");
 
   const today = new Date();
@@ -102,18 +113,14 @@ export default function Home() {
     day: "numeric",
   });
 
-  const cycleStartDate = new Date(today);
-  cycleStartDate.setDate(today.getDate() - 9);
-  const cycleDay =
-    Math.floor(
-      (today.getTime() - cycleStartDate.getTime()) / (1000 * 60 * 60 * 24),
-    ) + 1;
-
   const moodCategory = categories.find((c) => c.name === "Mood");
   const feelingSymptoms = moodCategory?.symptoms.slice(0, 8) ?? [];
 
+  const allSymptoms = categories.flatMap((c) => c.symptoms);
+
   useEffect(() => {
     fetchActivePeriod();
+    fetchCurrentCycle();
     fetchCategories();
     fetchQuote();
     fetchTodayJournalPreview();
@@ -139,7 +146,6 @@ export default function Home() {
         feeling: data.journal.feeling ?? null,
       };
     }
-
     return {
       entry: data.entry ?? "",
       feeling: data.feeling ?? null,
@@ -151,6 +157,26 @@ export default function Home() {
     if (!trimmed) return "";
     if (trimmed.length <= maxLength) return trimmed;
     return `${trimmed.slice(0, maxLength).trim()}...`;
+  }
+
+  async function fetchCurrentCycle() {
+    try {
+      const response = await api.get("/cycles");
+      const cycles: Cycle[] = response.data ?? [];
+      const activeCycle = cycles.find((cycle) => cycle.end_date === null);
+      if (!activeCycle) return setCycleDay(null);
+      const today = new Date();
+      const todayStr = formatDate(today);
+      const start = new Date(`${activeCycle.start_date}T00:00:00`);
+      const end = new Date(`${todayStr}T00:00:00`);
+      const day =
+        Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) +
+        1;
+      setCycleDay(day > 0 ? day : null);
+    } catch (error) {
+      console.error("Failed to fetch current cycle:", error);
+      setCycleDay(null);
+    }
   }
 
   async function fetchQuote() {
@@ -184,10 +210,7 @@ export default function Home() {
 
   async function fetchOrCreateTodayLog(): Promise<number | null> {
     try {
-      const response = await api.post("/daily-logs", {
-        date: todayString,
-      });
-
+      const response = await api.post("/daily-logs", { date: todayString });
       const logId = response.data.id;
       setTodayLogId(logId);
       return logId;
@@ -201,10 +224,10 @@ export default function Home() {
   async function fetchTodayJournalPreview() {
     try {
       const logId = await fetchOrCreateTodayLog();
-
       if (!logId) {
         setJournalPreview("");
         setJournalFeeling(null);
+        setSavedSymptomNames([]);
         return;
       }
 
@@ -218,10 +241,21 @@ export default function Home() {
           ? (apiFeelingToLabel[journal.feeling.toLowerCase()] ?? null)
           : null,
       );
+
+      const names: string[] =
+        log.daily_symptoms
+          ?.map((ds: any) => ds.symptom?.name)
+          .filter(Boolean) ?? [];
+      setSavedSymptomNames(names);
+      setSelectedSymptomIds(
+        log.daily_symptoms?.map((ds: any) => ds.symptom_id).filter(Boolean) ??
+          [],
+      );
     } catch (error) {
       console.error("Failed to fetch journal preview:", error);
       setJournalPreview("");
       setJournalFeeling(null);
+      setSavedSymptomNames([]);
     }
   }
 
@@ -237,7 +271,6 @@ export default function Home() {
     try {
       const logId = await fetchOrCreateTodayLog();
       if (!logId) return;
-
       router.push({
         pathname: "/journal",
         params: { dailyLogId: String(logId) },
@@ -258,6 +291,10 @@ export default function Home() {
       await api.post(`/daily-logs/${todayLogId}/symptoms`, {
         items: selectedSymptomIds.map((id) => ({ symptom_id: id })),
       });
+      const names = selectedSymptomIds
+        .map((id) => allSymptoms.find((s) => s.id === id)?.name)
+        .filter((name): name is string => Boolean(name));
+      setSavedSymptomNames(names);
       setShowSymptomsModal(false);
     } catch (error: any) {
       Alert.alert("Error", "Failed to save symptoms. Please try again.");
@@ -325,10 +362,7 @@ export default function Home() {
 
     setEndingPeriod(true);
     try {
-      await api.put(`/periods/${activePeriod.id}`, {
-        end_date: todayString,
-      });
-
+      await api.put(`/periods/${activePeriod.id}`, { end_date: todayString });
       Alert.alert("Period Ended", `Your period was ended on ${todayString}.`);
       setSelectedPeriod(null);
       await fetchActivePeriod();
@@ -341,11 +375,6 @@ export default function Home() {
     } finally {
       setEndingPeriod(false);
     }
-  }
-
-  function handleSelectFeeling(symptom: Symptom) {
-    setSelectedFeeling((prev) => (prev === symptom.id ? null : symptom.id));
-    toggleSymptom(symptom.id);
   }
 
   function toggleSymptom(symptomId: number) {
@@ -377,17 +406,45 @@ export default function Home() {
         </View>
 
         <View className="mt-5">
-          <SectionCard title="How are you feeling?">
-            <View className="flex-row flex-wrap gap-2">
-              {feelingSymptoms.map((symptom) => (
-                <PillButton
-                  key={symptom.id}
-                  label={symptom.name}
-                  selected={selectedSymptomIds.includes(symptom.id)}
-                  onPress={() => handleSelectFeeling(symptom)}
-                />
-              ))}
-            </View>
+          <SectionCard
+            title={
+              savedSymptomNames.length > 0
+                ? "Symptoms logged today"
+                : "How are you feeling?"
+            }
+          >
+            {savedSymptomNames.length > 0 ? (
+              <View className="flex-row flex-wrap" style={{ gap: 8 }}>
+                {savedSymptomNames.map((name) => (
+                  <View
+                    key={name}
+                    className="rounded-full px-3 py-1"
+                    style={{
+                      backgroundColor: theme.accent,
+                    }}
+                  >
+                    <Text
+                      className="text-sm font-medium"
+                      style={{ color: theme.text }}
+                    >
+                      {name}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            ) : (
+              // Default state — show feeling picker
+              <View className="flex-row flex-wrap gap-2">
+                {feelingSymptoms.map((symptom) => (
+                  <PillButton
+                    key={symptom.id}
+                    label={symptom.name}
+                    selected={selectedSymptomIds.includes(symptom.id)}
+                    onPress={() => toggleSymptom(symptom.id)}
+                  />
+                ))}
+              </View>
+            )}
 
             <View className="items-end mt-4">
               <Pressable

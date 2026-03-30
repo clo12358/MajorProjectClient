@@ -1,4 +1,4 @@
-import { Text, useColorScheme, View } from "react-native";
+import { ImageBackground, Text, useColorScheme, View } from "react-native";
 
 import { Colors } from "../../constants/theme";
 
@@ -11,15 +11,26 @@ export function QuoteCard({ quote }: QuoteCardProps) {
   const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
 
   return (
-    <View
+    <ImageBackground
+      source={require("../../assets/images/quote-background.png")}
       className="rounded-3xl overflow-hidden"
-      style={{ backgroundColor: theme.secondary }}
+      imageStyle={{ borderRadius: 24 }}
     >
-      <View className="px-5 py-6" style={{ backgroundColor: theme.accent }}>
-        <Text className="text-center italic" style={{ color: theme.text }}>
+      <View
+        style={{
+          backgroundColor:
+            colorScheme === "dark" ? "rgba(0,0,0,0.35)" : "transparent",
+          paddingHorizontal: 20,
+          paddingVertical: 24,
+        }}
+      >
+        <Text
+          className="text-base text-center italic"
+          style={{ color: theme.text }}
+        >
           {quote}
         </Text>
       </View>
-    </View>
+    </ImageBackground>
   );
 }

@@ -61,11 +61,12 @@ export function CalendarCard({
           let borderColor = "transparent";
           let textColor = theme.text;
 
+          // Priority order (lowest to highest): period → today → selected
           if (isPeriodDay) {
             backgroundColor = theme.accent;
           }
 
-          if (isToday && !isPeriodDay) {
+          if (isToday) {
             backgroundColor = theme.primaryPressed;
           }
 
@@ -73,10 +74,10 @@ export function CalendarCard({
             borderWidth = 2;
             borderColor = theme.text;
 
-            if (isPeriodDay) {
-              backgroundColor = theme.accent;
-            } else if (isToday) {
+            if (isToday) {
               backgroundColor = theme.primaryPressed;
+            } else if (isPeriodDay) {
+              backgroundColor = theme.accent;
             } else {
               backgroundColor = theme.backgroundSelected;
             }
