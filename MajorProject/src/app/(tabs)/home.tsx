@@ -1,5 +1,5 @@
-import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
   Modal,
@@ -39,6 +39,26 @@ interface Category {
   symptoms: Symptom[];
 }
 
+interface DailyLogResponse {
+  id: number;
+  date?: string;
+  journal?: {
+    id?: number;
+    entry?: string;
+    feeling?: string;
+  } | null;
+  entry?: string;
+  feeling?: string;
+}
+
+const apiFeelingToLabel: Record<string, string> = {
+  great: "Great",
+  good: "Good",
+  okay: "Okay",
+  low: "Low",
+  awful: "Awful",
+};
+
 export default function Home() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
@@ -50,8 +70,11 @@ export default function Home() {
   const [loggingPeriod, setLoggingPeriod] = useState(false);
   const [savingSymptoms, setSavingSymptoms] = useState(false);
   const [endingPeriod, setEndingPeriod] = useState(false);
+  const [openingJournal, setOpeningJournal] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [todayLogId, setTodayLogId] = useState<number | null>(null);
+  const [journalPreview, setJournalPreview] = useState("");
+  const [journalFeeling, setJournalFeeling] = useState<string | null>(null);
   const [activePeriod, setActivePeriod] = useState<{
     id: number;
     start_date: string;
@@ -93,7 +116,42 @@ export default function Home() {
     fetchActivePeriod();
     fetchCategories();
     fetchQuote();
+    fetchTodayJournalPreview();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchTodayJournalPreview();
+    }, []),
+  );
+
+  function formatDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  function getJournalFromDailyLog(data: DailyLogResponse) {
+    if (data.journal) {
+      return {
+        entry: data.journal.entry ?? "",
+        feeling: data.journal.feeling ?? null,
+      };
+    }
+
+    return {
+      entry: data.entry ?? "",
+      feeling: data.feeling ?? null,
+    };
+  }
+
+  function truncateText(text: string, maxLength = 70) {
+    const trimmed = text.trim();
+    if (!trimmed) return "";
+    if (trimmed.length <= maxLength) return trimmed;
+    return `${trimmed.slice(0, maxLength).trim()}...`;
+  }
 
   async function fetchQuote() {
     try {
@@ -129,11 +187,41 @@ export default function Home() {
       const response = await api.post("/daily-logs", {
         date: todayString,
       });
-      return response.data.id;
+
+      const logId = response.data.id;
+      setTodayLogId(logId);
+      return logId;
     } catch (error: any) {
       const message = error.response?.data?.message;
       Alert.alert("Error", message ?? "Could not create today's log.");
       return null;
+    }
+  }
+
+  async function fetchTodayJournalPreview() {
+    try {
+      const logId = await fetchOrCreateTodayLog();
+
+      if (!logId) {
+        setJournalPreview("");
+        setJournalFeeling(null);
+        return;
+      }
+
+      const response = await api.get(`/daily-logs/${logId}`);
+      const log: DailyLogResponse = response.data;
+      const journal = getJournalFromDailyLog(log);
+
+      setJournalPreview(truncateText(journal.entry ?? ""));
+      setJournalFeeling(
+        journal.feeling
+          ? (apiFeelingToLabel[journal.feeling.toLowerCase()] ?? null)
+          : null,
+      );
+    } catch (error) {
+      console.error("Failed to fetch journal preview:", error);
+      setJournalPreview("");
+      setJournalFeeling(null);
     }
   }
 
@@ -142,6 +230,21 @@ export default function Home() {
     if (!logId) return;
     setTodayLogId(logId);
     setShowSymptomsModal(true);
+  }
+
+  async function handleOpenJournal() {
+    setOpeningJournal(true);
+    try {
+      const logId = await fetchOrCreateTodayLog();
+      if (!logId) return;
+
+      router.push({
+        pathname: "/journal",
+        params: { dailyLogId: String(logId) },
+      });
+    } finally {
+      setOpeningJournal(false);
+    }
   }
 
   async function saveSymptoms() {
@@ -172,13 +275,6 @@ export default function Home() {
     } catch (error) {
       console.error("Failed to fetch periods:", error);
     }
-  }
-
-  function formatDate(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
   }
 
   async function handleLogPeriod() {
@@ -361,8 +457,11 @@ export default function Home() {
           <SectionCard
             title="Journal"
             rightContent={
-              <Text className="text-xs" style={{ color: theme.textSecondary }}>
-                Latest Entry
+              <Text
+                className="text-xs underline"
+                style={{ color: theme.textSecondary }}
+              >
+                View All
               </Text>
             }
           >
@@ -370,11 +469,13 @@ export default function Home() {
               className="text-sm mb-4"
               style={{ color: theme.textSecondary }}
             >
-              Today I felt more energized than usual. Took a nice walk...
+              {journalPreview || "No journal entry for today yet."}
             </Text>
+
             <LargeButton
-              title="Open Journal"
-              onPress={() => router.push("/journal")}
+              title={openingJournal ? "Opening..." : "Open Journal"}
+              disabled={openingJournal}
+              onPress={handleOpenJournal}
             />
           </SectionCard>
         </View>
