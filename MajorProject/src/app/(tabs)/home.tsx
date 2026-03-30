@@ -27,7 +27,6 @@ const flowMap: Record<string, { flow: string; has_clots: boolean }> = {
   "Blood Clots": { flow: "heavy", has_clots: true },
 };
 
-//  These 'interfaces' describe the shape of the data coming back from your API so TypeScript can catch mistakes.
 interface Symptom {
   id: number;
   name: string;
@@ -50,6 +49,7 @@ export default function Home() {
   const [selectedSymptomIds, setSelectedSymptomIds] = useState<number[]>([]);
   const [loggingPeriod, setLoggingPeriod] = useState(false);
   const [savingSymptoms, setSavingSymptoms] = useState(false);
+  const [endingPeriod, setEndingPeriod] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [todayLogId, setTodayLogId] = useState<number | null>(null);
   const [activePeriod, setActivePeriod] = useState<{
@@ -57,9 +57,8 @@ export default function Home() {
     start_date: string;
     end_date: string | null;
   } | null>(null);
-  const [quote, setQuote] = useState("The best is yet to come."); // fallback quote
+  const [quote, setQuote] = useState("The best is yet to come.");
 
-  // This creates the 7 day array for the date chips at the top, with the current day in the middle. It also formats today's date as YYYY-MM-DD for API calls.
   const today = new Date();
   const todayString = formatDate(today);
 
@@ -80,7 +79,6 @@ export default function Home() {
     day: "numeric",
   });
 
-  // Finds the 'Mood' category from the API and takes the first 8 symptoms to show as feeling options.
   const cycleStartDate = new Date(today);
   cycleStartDate.setDate(today.getDate() - 9);
   const cycleDay =
@@ -91,14 +89,12 @@ export default function Home() {
   const moodCategory = categories.find((c) => c.name === "Mood");
   const feelingSymptoms = moodCategory?.symptoms.slice(0, 8) ?? [];
 
-  // This means it runs when the page loads and fetches the periods and categories and combines them into one array for easier use later.
   useEffect(() => {
     fetchActivePeriod();
     fetchCategories();
-    fetchQuote(); // fetches a new random quote every time the page loads
+    fetchQuote();
   }, []);
 
-  // Fetches a random quote from dummyjson on every page load
   async function fetchQuote() {
     try {
       const randomId = Math.floor(Math.random() * 1385) + 1;
@@ -106,12 +102,10 @@ export default function Home() {
       const data = await response.json();
       setQuote(`"${data.quote}"`);
     } catch (error) {
-      // silently keep the fallback quote if the fetch fails
       console.error("Failed to fetch quote:", error);
     }
   }
 
-  // Fetches categories and symptoms from the API and combines them into one array so we can easily show symptoms grouped by category in the modal.
   async function fetchCategories() {
     try {
       const [catRes, symRes] = await Promise.all([
@@ -130,7 +124,6 @@ export default function Home() {
     }
   }
 
-  // Fetches or creates today's daily log and returns the log id. Will not create a new log if one already exists for today.
   async function fetchOrCreateTodayLog(): Promise<number | null> {
     try {
       const response = await api.post("/daily-logs", {
@@ -144,7 +137,6 @@ export default function Home() {
     }
   }
 
-  // When Log more symptoms is pressed, this function fetches or creates today's log to get the log id, then opens the modal.
   async function handleOpenSymptomsModal() {
     const logId = await fetchOrCreateTodayLog();
     if (!logId) return;
@@ -152,7 +144,6 @@ export default function Home() {
     setShowSymptomsModal(true);
   }
 
-  // This function is called when the symptoms modal is closed. It saves the selected symptoms.
   async function saveSymptoms() {
     if (!todayLogId || selectedSymptomIds.length === 0) {
       setShowSymptomsModal(false);
@@ -172,7 +163,6 @@ export default function Home() {
     }
   }
 
-  // This gets all periods and looks for one with no end date,
   async function fetchActivePeriod() {
     try {
       const response = await api.get("/periods");
@@ -191,7 +181,6 @@ export default function Home() {
     return `${year}-${month}-${day}`;
   }
 
-  // This function is called when Log Period button is pressed. It checks if a flow level is selected, then creates or updates a period with today's date and the selected flow level.
   async function handleLogPeriod() {
     if (!selectedPeriod) {
       Alert.alert("Select Flow", "Please select a flow level before logging.");
@@ -232,7 +221,32 @@ export default function Home() {
     }
   }
 
-  // This function is called when a feeling symptom is selected or deselected. It updates the selected feeling state and the list of selected symptom ids.
+  async function handleEndPeriodToday() {
+    if (!activePeriod) {
+      Alert.alert("No Active Period", "There is no active period to end.");
+      return;
+    }
+
+    setEndingPeriod(true);
+    try {
+      await api.put(`/periods/${activePeriod.id}`, {
+        end_date: todayString,
+      });
+
+      Alert.alert("Period Ended", `Your period was ended on ${todayString}.`);
+      setSelectedPeriod(null);
+      await fetchActivePeriod();
+    } catch (error: any) {
+      const message = error.response?.data?.message;
+      Alert.alert(
+        "Error",
+        message ?? "Failed to end period. Please try again.",
+      );
+    } finally {
+      setEndingPeriod(false);
+    }
+  }
+
   function handleSelectFeeling(symptom: Symptom) {
     setSelectedFeeling((prev) => (prev === symptom.id ? null : symptom.id));
     toggleSymptom(symptom.id);
@@ -258,18 +272,14 @@ export default function Home() {
         showsVerticalScrollIndicator={false}
         bounces
       >
-        {/* Date chips */}
         <DateChips days={days} />
 
-        {/* Day card */}
         <DayCard date={formattedToday} cycleDay={cycleDay} />
 
-        {/* Quote Card — random quote fetched on every page load */}
         <View className="mt-5">
           <QuoteCard quote={quote} />
         </View>
 
-        {/* Feelings */}
         <View className="mt-5">
           <SectionCard title="How are you feeling?">
             <View className="flex-row flex-wrap gap-2">
@@ -297,7 +307,6 @@ export default function Home() {
           </SectionCard>
         </View>
 
-        {/* Period Tracking */}
         <View className="mt-4">
           <SectionCard title="Period Tracking">
             {activePeriod ? (
@@ -332,10 +341,22 @@ export default function Home() {
               disabled={loggingPeriod || !selectedPeriod}
               onPress={handleLogPeriod}
             />
+
+            {activePeriod && (
+              <View className="mt-4">
+                <LargeButton
+                  title={endingPeriod ? "Ending Period..." : "End Period Today"}
+                  icon="checkmark-circle-outline"
+                  backgroundColor={theme.danger}
+                  textColor={theme.dangerText}
+                  disabled={endingPeriod}
+                  onPress={handleEndPeriodToday}
+                />
+              </View>
+            )}
           </SectionCard>
         </View>
 
-        {/* Journal */}
         <View className="mt-4">
           <SectionCard
             title="Journal"
@@ -359,7 +380,6 @@ export default function Home() {
         </View>
       </ScrollView>
 
-      {/* Symptoms Modal */}
       <Modal
         visible={showSymptomsModal}
         animationType="slide"
@@ -408,7 +428,6 @@ export default function Home() {
                 Log more symptoms
               </Text>
 
-              {/* This maps through all categories and symptoms. */}
               {categories.map((category) => (
                 <SymptomCategorySection
                   key={category.id}

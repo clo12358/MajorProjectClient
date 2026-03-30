@@ -7,12 +7,14 @@ type CalendarCardProps = {
   todayString: string;
   selectedDate: string | null;
   onSelectDate: (dateString: string) => void;
+  periodDates?: string[];
 };
 
 export function CalendarCard({
   todayString,
   selectedDate,
   onSelectDate,
+  periodDates = [],
 }: CalendarCardProps) {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
@@ -52,14 +54,32 @@ export function CalendarCard({
 
           const isToday = date.dateString === todayString;
           const isSelected = date.dateString === selectedDate;
+          const isPeriodDay = periodDates.includes(date.dateString);
 
           let backgroundColor = "transparent";
-          const textColor = theme.text;
+          let borderWidth = 0;
+          let borderColor = "transparent";
+          let textColor = theme.text;
+
+          if (isPeriodDay) {
+            backgroundColor = theme.accent;
+          }
+
+          if (isToday && !isPeriodDay) {
+            backgroundColor = theme.primaryPressed;
+          }
 
           if (isSelected) {
-            backgroundColor = theme.primaryPressed;
-          } else if (isToday) {
-            backgroundColor = theme.primary;
+            borderWidth = 2;
+            borderColor = theme.text;
+
+            if (isPeriodDay) {
+              backgroundColor = theme.accent;
+            } else if (isToday) {
+              backgroundColor = theme.primaryPressed;
+            } else {
+              backgroundColor = theme.backgroundSelected;
+            }
           }
 
           return (
@@ -71,6 +91,8 @@ export function CalendarCard({
                 height: 34,
                 borderRadius: 17,
                 backgroundColor,
+                borderWidth,
+                borderColor,
                 marginVertical: 4,
               }}
             >
