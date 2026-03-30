@@ -1,14 +1,14 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import {
-    Pressable,
-    ScrollView,
-    Text,
-    useColorScheme,
-    View,
+  Pressable,
+  ScrollView,
+  Text,
+  useColorScheme,
+  View,
 } from "react-native";
 
-import { PrivacySection } from "../components/custom/privacy-section";
+import { PrivacySection } from "../components/custom/privacy-data";
 import { Colors } from "../constants/theme";
 
 export default function PrivacyData() {

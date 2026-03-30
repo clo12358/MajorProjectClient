@@ -25,6 +25,7 @@ export default function EditProfile() {
   const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
 
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [newImageUri, setNewImageUri] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [height, setHeight] = useState("");
   const [weight, setWeight] = useState("");
@@ -37,7 +38,6 @@ export default function EditProfile() {
     fetchProfile();
   }, []);
 
-  // This fetches the user data from the API and fills the fields.
   async function fetchProfile() {
     try {
       const response = await api.get("/me");
@@ -55,21 +55,30 @@ export default function EditProfile() {
     }
   }
 
-  // This is setup to pick and image for the profile picture, but the backend doesn't support uploading yet.
   async function handlePickImage() {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert(
+        "Permission required",
+        "Please allow access to your photo library.",
+      );
+      return;
+    }
+
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 1,
+      quality: 0.8,
     });
 
     if (!result.canceled) {
-      setProfileImage(result.assets[0].uri);
+      const uri = result.assets[0].uri;
+      setProfileImage(uri);
+      setNewImageUri(uri);
     }
   }
 
-  // This takes JavaScript date object and converts it into year, month and day format. Because thats what my backend expects.
   function formatDate(date: Date): string {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -80,24 +89,54 @@ export default function EditProfile() {
   async function handleSave() {
     setSaving(true);
     try {
-      await api.put("/me", {
-        name,
-        dob: dateOfBirth ? formatDate(dateOfBirth) : null,
-        height: height ? Number(height) : null,
-        weight: weight ? Number(weight) : null,
+      const formData = new FormData();
+
+      formData.append("_method", "PUT");
+
+      if (name) formData.append("name", name);
+      if (dateOfBirth) formData.append("dob", formatDate(dateOfBirth));
+      if (height) formData.append("height", String(Number(height)));
+      if (weight) formData.append("weight", String(Number(weight)));
+
+      if (newImageUri) {
+        if (Platform.OS === "web") {
+          // On web, expo-image-picker returns a blob: URL — fetch it and convert to a Blob
+          const res = await fetch(newImageUri);
+          const blob = await res.blob();
+          const ext = blob.type === "image/png" ? "png" : "jpg";
+          formData.append("profile_image", blob, `profile.${ext}`);
+        } else {
+          const filename = newImageUri.split("/").pop() ?? "profile.jpg";
+          const ext = filename.split(".").pop()?.toLowerCase() ?? "jpg";
+          const mimeType = ext === "png" ? "image/png" : "image/jpeg";
+          formData.append("profile_image", {
+            uri: newImageUri,
+            type: mimeType,
+            name: filename,
+          } as any);
+        }
+      }
+
+      await api.post("/me", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
-      // Navigate back to profile with a success flag so the profile page can show a success message.
       router.replace({ pathname: "/profile", params: { updated: "true" } });
-
-      //This will catch any validation errors from the backend and display the first error message.
     } catch (error: any) {
+      console.log("Status:", error.response?.status);
+      console.log("Full error:", JSON.stringify(error.response?.data, null, 2));
       const errors = error.response?.data?.errors;
       if (errors) {
-        const firstError = Object.values(errors)[0] as string[];
-        Alert.alert("Validation Error", firstError[0]);
+        const allErrors = Object.entries(errors)
+          .map(([field, msgs]) => `${field}: ${(msgs as string[]).join(", ")}`)
+          .join("\n");
+        Alert.alert("Validation Error", allErrors);
       } else {
-        Alert.alert("Error", "Failed to save profile. Please try again.");
+        Alert.alert(
+          "Error",
+          error.response?.data?.message ??
+            "Failed to save profile. Please try again.",
+        );
       }
     } finally {
       setSaving(false);
@@ -129,7 +168,6 @@ export default function EditProfile() {
       }}
       showsVerticalScrollIndicator={false}
     >
-      {/* heading and delete account button. */}
       <View className="flex-row items-center justify-between mb-6">
         <View className="flex-row items-center">
           <Pressable onPress={() => router.back()} className="mr-3">
@@ -149,7 +187,9 @@ export default function EditProfile() {
           </Text>
         </Pressable>
       </View>
+
       <ProfileImageCard profileImage={profileImage} onPress={handlePickImage} />
+
       <View className="gap-4">
         <FormInput
           label="Name (first and last)"
@@ -264,6 +304,7 @@ export default function EditProfile() {
           keyboardType="numeric"
         />
       </View>
+
       <View className="mt-6">
         <LargeButton
           title={saving ? "Saving..." : "Save Changes"}

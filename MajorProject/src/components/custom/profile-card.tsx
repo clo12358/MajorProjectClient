@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Text, useColorScheme, View } from "react-native";
+import { Image, Platform, Text, useColorScheme, View } from "react-native";
 
 import { Colors } from "../../constants/theme";
 import { LargeButton } from "./large-button";
@@ -7,6 +7,7 @@ import { LargeButton } from "./large-button";
 type ProfileCardProps = {
   name: string;
   email: string;
+  profileImage?: string | null;
   buttonTitle?: string;
   onPressButton?: () => void;
 };
@@ -14,6 +15,7 @@ type ProfileCardProps = {
 export function ProfileCard({
   name,
   email,
+  profileImage,
   buttonTitle = "Edit Profile",
   onPressButton,
 }: ProfileCardProps) {
@@ -30,14 +32,37 @@ export function ProfileCard({
     >
       <View className="flex-row items-center gap-4 mb-3">
         <View
-          className="h-14 w-14 rounded-full items-center justify-center"
-          style={{ backgroundColor: theme.backgroundSelected }}
+          className="rounded-full items-center justify-center overflow-hidden"
+          style={{
+            backgroundColor: theme.backgroundSelected,
+            width: 56,
+            height: 56,
+          }}
         >
-          <Ionicons
-            name="person-outline"
-            size={26}
-            color={theme.textSecondary}
-          />
+          {profileImage ? (
+            Platform.OS === "web" ? (
+              <img
+                src={profileImage}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  display: "block",
+                }}
+              />
+            ) : (
+              <Image
+                source={{ uri: profileImage }}
+                style={{ width: 56, height: 56, borderRadius: 28 }}
+              />
+            )
+          ) : (
+            <Ionicons
+              name="person-outline"
+              size={26}
+              color={theme.textSecondary}
+            />
+          )}
         </View>
 
         <View className="flex-1">

@@ -12,7 +12,7 @@ export function QuoteCard({ quote }: QuoteCardProps) {
 
   return (
     <ImageBackground
-      source={require("../../assets/images/quote-background.png")}
+      source={require("../../assets/images/Background_Image3.png")}
       className="rounded-3xl overflow-hidden"
       imageStyle={{ borderRadius: 24 }}
     >

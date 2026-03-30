@@ -53,6 +53,12 @@ function formatDateString(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+function getDayDifference(startDate: string, endDate: string): number {
+  const start = new Date(`${startDate}T00:00:00`);
+  const end = new Date(`${endDate}T00:00:00`);
+  return Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+}
+
 const todayString = formatDateString(new Date());
 
 export default function CalendarPage() {
@@ -67,15 +73,38 @@ export default function CalendarPage() {
   const [dailyLogsByDate, setDailyLogsByDate] = useState<
     Record<string, DailyLog>
   >({});
-  const [cycleDay, setCycleDay] = useState<number | null>(null);
+  const [cycles, setCycles] = useState<Cycle[]>([]);
+  const [hasAnyData, setHasAnyData] = useState<boolean | null>(null);
 
   const displayDate = selectedDate ?? todayString;
 
   useEffect(() => {
-    fetchCalendarData();
-    fetchCurrentCycle();
-    fetchAllDailyLogs();
+    fetchAllData();
   }, []);
+
+  async function fetchAllData() {
+    try {
+      await Promise.all([
+        fetchCycles(),
+        fetchCalendarData(),
+        fetchAllDailyLogs(),
+      ]);
+    } catch (error) {
+      console.error("Failed to fetch data:", error);
+    }
+  }
+
+  async function fetchCycles() {
+    try {
+      const response = await api.get("/cycles");
+      const fetchedCycles: Cycle[] = response.data ?? [];
+      setCycles(fetchedCycles);
+      setHasAnyData(fetchedCycles.length > 0);
+    } catch (error) {
+      console.error("Failed to fetch cycles:", error);
+      setHasAnyData(false);
+    }
+  }
 
   function getDatesInRange(startDate: string, endDate: string): string[] {
     const dates: string[] = [];
@@ -86,28 +115,6 @@ export default function CalendarPage() {
       current.setDate(current.getDate() + 1);
     }
     return dates;
-  }
-
-  function getDayDifference(startDate: string, endDate: string): number {
-    const start = new Date(`${startDate}T00:00:00`);
-    const end = new Date(`${endDate}T00:00:00`);
-    return Math.floor(
-      (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
-    );
-  }
-
-  async function fetchCurrentCycle() {
-    try {
-      const response = await api.get("/cycles");
-      const cycles: Cycle[] = response.data ?? [];
-      const activeCycle = cycles.find((cycle) => cycle.end_date === null);
-      if (!activeCycle) return setCycleDay(null);
-      const day = getDayDifference(activeCycle.start_date, todayString) + 1;
-      setCycleDay(day > 0 ? day : null);
-    } catch (error) {
-      console.error("Failed to fetch cycles:", error);
-      setCycleDay(null);
-    }
   }
 
   async function fetchCalendarData() {
@@ -159,6 +166,22 @@ export default function CalendarPage() {
     }
   }
 
+  // Find which cycle the displayDate falls within, and calculate the day number
+  const cycleDay = useMemo(() => {
+    if (cycles.length === 0) return null;
+
+    const cycle = cycles.find((c) => {
+      const afterStart = displayDate >= c.start_date;
+      const beforeEnd = c.end_date === null || displayDate <= c.end_date;
+      return afterStart && beforeEnd;
+    });
+
+    if (!cycle) return null;
+
+    const day = getDayDifference(cycle.start_date, displayDate) + 1;
+    return day > 0 ? day : null;
+  }, [cycles, displayDate]);
+
   const infoTitle = useMemo(() => {
     const date = new Date(`${displayDate}T00:00:00`);
     return date.toLocaleDateString("en-GB", {
@@ -177,7 +200,23 @@ export default function CalendarPage() {
       ?.map((ds) => ds.symptom?.name)
       .filter((name): name is string => Boolean(name)) ?? [];
 
+  // Whether this date has any logged data at all
+  const dateHasNoData =
+    !selectedDayLog && !isPeriodDate && symptomNames.length === 0;
+
+  function getCycleTitle(): string {
+    if (hasAnyData === false) return "Nothing logged yet";
+    if (!cycleDay) return "No cycle data for this date";
+    return `Cycle Day ${cycleDay}`;
+  }
+
   function getPeriodSubtitle(): string {
+    if (hasAnyData === false) {
+      return "Start logging your cycle on the home page to see your data here.";
+    }
+    if (dateHasNoData) {
+      return "Nothing logged for this date yet.";
+    }
     if (selectedDayLog) {
       const { flow, has_clots } = selectedDayLog;
       const capitalised = flow.charAt(0).toUpperCase() + flow.slice(1);
@@ -186,7 +225,7 @@ export default function CalendarPage() {
         : `${capitalised} flow`;
     }
     if (isPeriodDate) return "Period recorded for this date";
-    return "You haven't added anything for this date";
+    return "Nothing logged for this date yet.";
   }
 
   return (
@@ -197,9 +236,7 @@ export default function CalendarPage() {
       >
         <View className="px-5 pt-8">
           <View className="mt-5 mb-4">
-            <InfoCard
-              title={cycleDay ? `Cycle Day ${cycleDay}` : "No active cycle"}
-            />
+            <InfoCard title={getCycleTitle()} />
           </View>
 
           <CalendarCard

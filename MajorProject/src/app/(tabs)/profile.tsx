@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, useColorScheme, View } from "react-native";
 
 import api from "@/lib/axios";
@@ -41,6 +41,14 @@ export default function Profile() {
     fetchQuote();
   }, []);
 
+  // Re-fetch profile every time the page comes into focus so the
+  // updated image shows immediately after returning from edit profile
+  useFocusEffect(
+    useCallback(() => {
+      fetchProfile();
+    }, []),
+  );
+
   useEffect(() => {
     if (updated === "true") {
       setShowToast(true);
@@ -51,6 +59,7 @@ export default function Profile() {
   async function fetchProfile() {
     try {
       const response = await api.get("/me");
+      console.log("profile_image URL:", response.data.profile_image);
       setUser(response.data);
     } catch (error) {
       console.error("Failed to fetch profile:", error);
@@ -96,6 +105,7 @@ export default function Profile() {
         <ProfileCard
           name={user?.name ?? "Unknown"}
           email={user?.email ?? "Unknown"}
+          profileImage={user?.profile_image ?? null}
           buttonTitle="Edit Profile"
           onPressButton={() => router.push("/edit-profile")}
         />
