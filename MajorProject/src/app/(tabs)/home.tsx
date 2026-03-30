@@ -457,12 +457,14 @@ export default function Home() {
           <SectionCard
             title="Journal"
             rightContent={
-              <Text
-                className="text-xs underline"
-                style={{ color: theme.textSecondary }}
-              >
-                View All
-              </Text>
+              <Pressable onPress={() => router.push("/all-journals")}>
+                <Text
+                  className="text-xs underline"
+                  style={{ color: theme.textSecondary }}
+                >
+                  View All
+                </Text>
+              </Pressable>
             }
           >
             <Text
