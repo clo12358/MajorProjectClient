@@ -41,8 +41,6 @@ export default function Profile() {
     fetchQuote();
   }, []);
 
-  // Show the success toast if we were redirected here after a profile update,
-  // then immediately clear the param from the URL so it doesn't re-trigger on reload.
   useEffect(() => {
     if (updated === "true") {
       setShowToast(true);
@@ -50,7 +48,6 @@ export default function Profile() {
     }
   }, [updated]);
 
-  //Connecting API
   async function fetchProfile() {
     try {
       const response = await api.get("/me");
@@ -96,7 +93,6 @@ export default function Profile() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
       <View className="px-6 pt-10">
-        {/* Profile Card */}
         <ProfileCard
           name={user?.name ?? "Unknown"}
           email={user?.email ?? "Unknown"}
@@ -104,12 +100,10 @@ export default function Profile() {
           onPressButton={() => router.push("/edit-profile")}
         />
 
-        {/* Quote Card */}
         <View className="mt-5">
           <QuoteCard quote={quote} />
         </View>
 
-        {/* Setting List */}
         <View className="mt-5 gap-4">
           <SettingsRow
             title="Notifications"
@@ -132,7 +126,7 @@ export default function Profile() {
             subtitle="Manage your data"
             icon="shield-checkmark-outline"
             type="link"
-            onPress={() => {}}
+            onPress={() => router.push("/privacy-data")}
           />
 
           <SettingsRow
@@ -143,7 +137,6 @@ export default function Profile() {
           />
         </View>
 
-        {/* Log Out Button */}
         <View className="mt-6">
           <LargeButton
             title="Log Out"
@@ -157,7 +150,6 @@ export default function Profile() {
         <View className="h-10" />
       </View>
 
-      {/* Success toast */}
       <Toast
         message="Profile updated successfully"
         visible={showToast}

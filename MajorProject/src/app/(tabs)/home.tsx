@@ -499,7 +499,6 @@ export default function Home() {
               <View className="mt-4">
                 <LargeButton
                   title={endingPeriod ? "Ending Period..." : "End Period Today"}
-                  icon="checkmark-circle-outline"
                   backgroundColor={theme.danger}
                   textColor={theme.dangerText}
                   disabled={endingPeriod}
