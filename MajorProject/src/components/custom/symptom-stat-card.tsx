@@ -18,6 +18,10 @@ export function SymptomsCard({ title, symptoms }: SymptomsCardProps) {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
 
+  const RANK_COLORS = [theme.primary, theme.secondary, theme.accent];
+
+  const top3 = symptoms.slice(0, 3);
+
   return (
     <View
       className="rounded-3xl border p-5"
@@ -26,42 +30,61 @@ export function SymptomsCard({ title, symptoms }: SymptomsCardProps) {
         borderColor: theme.backgroundSelected,
       }}
     >
-      <Text className="text-3xl font-medium mb-5" style={{ color: theme.text }}>
+      <Text
+        className="text-2xl font-semibold mb-1"
+        style={{ color: theme.text }}
+      >
         {title}
       </Text>
+      <Text className="text-xs mb-5" style={{ color: theme.textSecondary }}>
+        Based on all logged days
+      </Text>
 
-      <View className="gap-5">
-        {symptoms.map((symptom) => (
-          <View key={symptom.rank}>
-            <View className="flex-row items-center mb-2">
-              <View
-                className="h-8 w-8 rounded-full items-center justify-center mr-3"
-                style={{ backgroundColor: theme.backgroundSelected }}
-              >
-                <Text style={{ color: theme.text }}>{symptom.rank}</Text>
-              </View>
+      <View className="gap-3">
+        {top3.map((symptom, index) => {
+          const accentColor = RANK_COLORS[index];
+          const isTop = index === 0;
 
-              <Text className="flex-1 text-base" style={{ color: theme.text }}>
-                {symptom.name}
-              </Text>
-
-              <Text style={{ color: theme.text }}>{symptom.count} times</Text>
-            </View>
-
+          return (
             <View
-              className="h-2 rounded-full overflow-hidden"
-              style={{ backgroundColor: theme.accent }}
+              key={symptom.rank}
+              className="rounded-2xl p-4"
+              style={{
+                backgroundColor: accentColor + "22",
+                borderWidth: 1,
+                borderColor: accentColor + (isTop ? "88" : "44"),
+              }}
             >
-              <View
-                className="h-2 rounded-full"
-                style={{
-                  width: symptom.width,
-                  backgroundColor: theme.primary,
-                }}
-              />
+              <View className="flex-row items-center">
+                <View
+                  className="rounded-full px-2 py-0.5 mr-3"
+                  style={{ backgroundColor: accentColor }}
+                >
+                  <Text
+                    className="text-xs font-bold"
+                    style={{ color: theme.background }}
+                  >
+                    #{symptom.rank}
+                  </Text>
+                </View>
+
+                <Text
+                  className="flex-1 font-semibold text-sm"
+                  style={{ color: theme.text }}
+                >
+                  {symptom.name}
+                </Text>
+
+                <Text
+                  className="text-xs font-medium"
+                  style={{ color: theme.textSecondary }}
+                >
+                  {symptom.count}×
+                </Text>
+              </View>
             </View>
-          </View>
-        ))}
+          );
+        })}
       </View>
     </View>
   );
