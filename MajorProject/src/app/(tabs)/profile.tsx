@@ -1,9 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, useColorScheme, View } from "react-native";
+import { ActivityIndicator, Alert, useColorScheme, View } from "react-native";
 
 import api from "@/lib/axios";
+import { generateAndShareReport } from "@/lib/generateReport";
 import { LargeButton } from "../../components/custom/large-button";
 import { ProfileCard } from "../../components/custom/profile-card";
 import { QuoteCard } from "../../components/custom/quote-card";
@@ -29,6 +30,7 @@ export default function Profile() {
   const [appearance, setAppearance] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [exportingReport, setExportingReport] = useState(false);
   const [quote, setQuote] = useState(
     "Enjoy the process. The results will come.",
   );
@@ -41,8 +43,6 @@ export default function Profile() {
     fetchQuote();
   }, []);
 
-  // Re-fetch profile every time the page comes into focus so the
-  // updated image shows immediately after returning from edit profile
   useFocusEffect(
     useCallback(() => {
       fetchProfile();
@@ -59,7 +59,6 @@ export default function Profile() {
   async function fetchProfile() {
     try {
       const response = await api.get("/me");
-      console.log("profile_image URL:", response.data.profile_image);
       setUser(response.data);
     } catch (error) {
       console.error("Failed to fetch profile:", error);
@@ -82,6 +81,21 @@ export default function Profile() {
   async function handleLogout() {
     await AsyncStorage.removeItem("auth_token");
     router.replace("/(auth)/login");
+  }
+
+  async function handleExportReport() {
+    setExportingReport(true);
+    try {
+      await generateAndShareReport();
+    } catch (error) {
+      console.error("Failed to export report:", error);
+      Alert.alert(
+        "Export Failed",
+        "Something went wrong generating your report. Please try again.",
+      );
+    } finally {
+      setExportingReport(false);
+    }
   }
 
   if (loading) {
@@ -140,10 +154,11 @@ export default function Profile() {
           />
 
           <SettingsRow
-            title="Export Data"
-            icon="download-outline"
+            title={exportingReport ? "Generating Report..." : "Export Data"}
+            subtitle="Download a PDF report for your doctor"
+            icon={exportingReport ? "hourglass-outline" : "download-outline"}
             type="link"
-            onPress={() => {}}
+            onPress={exportingReport ? undefined : handleExportReport}
           />
         </View>
 
