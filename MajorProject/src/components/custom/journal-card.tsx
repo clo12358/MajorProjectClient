@@ -1,7 +1,7 @@
-import { Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { Text, useColorScheme, View } from "react-native";
 
 import { Colors } from "@/constants/theme";
-import { useColorScheme } from "react-native";
 
 export interface JournalEntry {
   id: number;
@@ -21,6 +21,17 @@ interface JournalCardProps {
   journal: JournalEntry;
 }
 
+const MOOD_CONFIG: Record<
+  string,
+  { icon: keyof typeof Ionicons.glyphMap; label: string }
+> = {
+  great: { icon: "heart-outline", label: "Great" },
+  good: { icon: "happy-outline", label: "Good" },
+  okay: { icon: "remove-circle-outline", label: "Okay" },
+  low: { icon: "sad-outline", label: "Low" },
+  awful: { icon: "skull-outline", label: "Awful" },
+};
+
 function formatDate(dateString?: string) {
   if (!dateString) return "Unknown date";
   const date = new Date(`${dateString}T00:00:00`);
@@ -32,31 +43,11 @@ function formatDate(dateString?: string) {
   });
 }
 
-function formatFeeling(
-  feeling: JournalEntry["feeling"],
-): "Great" | "Good" | "Okay" | "Low" | "Awful" | null {
-  if (!feeling) return null;
-  switch (feeling) {
-    case "great":
-      return "Great";
-    case "good":
-      return "Good";
-    case "okay":
-      return "Okay";
-    case "low":
-      return "Low";
-    case "awful":
-      return "Awful";
-    default:
-      return null;
-  }
-}
-
 export function JournalCard({ journal }: JournalCardProps) {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
 
-  const feelingLabel = formatFeeling(journal.feeling);
+  const mood = journal.feeling ? MOOD_CONFIG[journal.feeling] : null;
 
   function getMoodColor(feeling: JournalEntry["feeling"]) {
     switch (feeling) {
@@ -75,6 +66,8 @@ export function JournalCard({ journal }: JournalCardProps) {
     }
   }
 
+  const moodColor = getMoodColor(journal.feeling);
+
   return (
     <View
       className="rounded-3xl border p-4"
@@ -91,17 +84,16 @@ export function JournalCard({ journal }: JournalCardProps) {
           {formatDate(journal.daily_log?.date)}
         </Text>
 
-        {feelingLabel && (
+        {mood && (
           <View
-            className="rounded-full px-3 py-1"
-            style={{ backgroundColor: getMoodColor(journal.feeling) }}
+            className="rounded-full p-2"
+            style={{
+              backgroundColor: moodColor + "33",
+              borderWidth: 1,
+              borderColor: moodColor + "66",
+            }}
           >
-            <Text
-              className="text-xs font-semibold"
-              style={{ color: theme.background }}
-            >
-              {feelingLabel}
-            </Text>
+            <Ionicons name={mood.icon} size={18} color={moodColor} />
           </View>
         )}
       </View>
