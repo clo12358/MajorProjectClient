@@ -1,6 +1,7 @@
-import { Pressable, Text, useColorScheme, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { Calendar } from "react-native-calendars";
 
+import { useTheme } from "@/context/ThemeContext";
 import { Colors } from "../../constants/theme";
 
 type CalendarCardProps = {
@@ -16,8 +17,8 @@ export function CalendarCard({
   onSelectDate,
   periodDates = [],
 }: CalendarCardProps) {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
+  const { isDark } = useTheme();
+  const theme = Colors[isDark ? "dark" : "light"];
 
   return (
     <View

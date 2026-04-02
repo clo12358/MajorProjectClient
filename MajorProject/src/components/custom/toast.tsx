@@ -1,5 +1,6 @@
+import { useTheme } from "@/context/ThemeContext";
 import { useEffect, useRef } from "react";
-import { Animated, Text, useColorScheme } from "react-native";
+import { Animated, Text } from "react-native";
 import { Colors } from "../../constants/theme";
 
 interface ToastProps {
@@ -15,8 +16,8 @@ export function Toast({
   onHide,
   duration = 2500,
 }: ToastProps) {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
+  const { isDark } = useTheme();
+  const theme = Colors[isDark ? "dark" : "light"];
   const opacity = useRef(new Animated.Value(0)).current;
   const animationRef = useRef<Animated.CompositeAnimation | null>(null);
 

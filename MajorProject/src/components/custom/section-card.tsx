@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
-import { Text, useColorScheme, View } from "react-native";
+import { Text, View } from "react-native";
 
+import { useTheme } from "@/context/ThemeContext";
 import { Colors } from "../../constants/theme";
 
 type SectionCardProps = {
@@ -14,8 +15,8 @@ export function SectionCard({
   rightContent,
   children,
 }: SectionCardProps) {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
+  const { isDark } = useTheme();
+  const theme = Colors[isDark ? "dark" : "light"];
 
   return (
     <View

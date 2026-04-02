@@ -6,10 +6,10 @@ import {
   Pressable,
   ScrollView,
   Text,
-  useColorScheme,
-  View,
+  View
 } from "react-native";
 
+import { useTheme } from "@/context/ThemeContext";
 import api from "@/lib/axios";
 import { DateChips } from "../../components/custom/date-chips";
 import { DayCard } from "../../components/custom/day-card";
@@ -70,8 +70,8 @@ const apiFeelingToLabel: Record<string, string> = {
 };
 
 export default function Home() {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
+  const { isDark } = useTheme();
+  const theme = Colors[isDark ? "dark" : "light"];
 
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
   const [showSymptomsModal, setShowSymptomsModal] = useState(false);
@@ -399,7 +399,7 @@ export default function Home() {
       >
         <DateChips days={days} />
 
-        <DayCard date={formattedToday} cycleDay={cycleDay} />
+        <DayCard date={formattedToday} cycleDay={cycleDay ?? 0} />
 
         <View className="mt-5">
           <QuoteCard quote={quote} />

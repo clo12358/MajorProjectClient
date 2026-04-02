@@ -1,5 +1,6 @@
-import { ImageBackground, Text, useColorScheme, View } from "react-native";
+import { ImageBackground, Text, View } from "react-native";
 
+import { useTheme } from "@/context/ThemeContext";
 import { Colors } from "../../constants/theme";
 
 type QuoteCardProps = {
@@ -7,8 +8,8 @@ type QuoteCardProps = {
 };
 
 export function QuoteCard({ quote }: QuoteCardProps) {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
+  const { isDark } = useTheme();
+  const theme = Colors[isDark ? "dark" : "light"];
 
   return (
     <ImageBackground
@@ -18,8 +19,7 @@ export function QuoteCard({ quote }: QuoteCardProps) {
     >
       <View
         style={{
-          backgroundColor:
-            colorScheme === "dark" ? "rgba(0,0,0,0.35)" : "transparent",
+          backgroundColor: isDark ? "rgba(0,0,0,0.35)" : "transparent",
           paddingHorizontal: 20,
           paddingVertical: 24,
         }}

@@ -7,11 +7,11 @@ import {
   Pressable,
   ScrollView,
   Text,
-  useColorScheme,
-  View,
+  View
 } from "react-native";
 import { BarChart, LineChart } from "react-native-gifted-charts";
 
+import { useTheme } from "@/context/ThemeContext";
 import api from "@/lib/axios";
 import { QuoteCard } from "../../components/custom/quote-card";
 import { StatCard } from "../../components/custom/stat-card";
@@ -90,8 +90,10 @@ const FEELING_SCORE: Record<string, number> = {
 };
 
 export default function Insights() {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
+  // const colorScheme = useColorScheme();
+  // const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
+  const { isDark } = useTheme();
+  const theme = Colors[isDark ? "dark" : "light"];
 
   const [quote, setQuote] = useState("Patterns take time — keep logging.");
 

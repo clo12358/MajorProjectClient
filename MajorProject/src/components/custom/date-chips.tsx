@@ -1,5 +1,6 @@
-import { Text, useColorScheme, View } from "react-native";
+import { Text, View } from "react-native";
 
+import { useTheme } from "@/context/ThemeContext";
 import { Colors } from "../../constants/theme";
 
 type DayItem = {
@@ -13,8 +14,8 @@ type DateChipsProps = {
 };
 
 export function DateChips({ days }: DateChipsProps) {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
+  const { isDark } = useTheme();
+  const theme = Colors[isDark ? "dark" : "light"];
 
   return (
     <View className="flex-row justify-between mb-5">

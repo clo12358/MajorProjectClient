@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Link, router } from "expo-router";
 import { useMemo, useState } from "react";
-import { Image, Text, useColorScheme, View } from "react-native";
+import { Image, Text, View, useColorScheme } from "react-native";
 
 import { FormInput } from "@/components/custom/form-input";
 import { LargeButton } from "@/components/custom/large-button";

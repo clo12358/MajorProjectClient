@@ -1,5 +1,6 @@
-import { Text, useColorScheme, View } from "react-native";
+import { Text, View } from "react-native";
 
+import { useTheme } from "@/context/ThemeContext";
 import { Colors } from "../../constants/theme";
 import { PillButton } from "./pill-button";
 
@@ -16,8 +17,8 @@ export function SymptomCategorySection({
   selectedSymptoms,
   onToggleSymptom,
 }: SymptomCategorySectionProps) {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
+  const { isDark } = useTheme();
+  const theme = Colors[isDark ? "dark" : "light"];
 
   return (
     <View className="mb-6">

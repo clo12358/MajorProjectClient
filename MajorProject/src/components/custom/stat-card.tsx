@@ -1,5 +1,6 @@
-import { Text, useColorScheme, View } from "react-native";
+import { Text, View } from "react-native";
 
+import { useTheme } from "@/context/ThemeContext";
 import { Colors } from "../../constants/theme";
 
 type StatCardProps = {
@@ -9,8 +10,8 @@ type StatCardProps = {
 };
 
 export function StatCard({ title, value, label }: StatCardProps) {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
+  const { isDark } = useTheme();
+  const theme = Colors[isDark ? "dark" : "light"];
 
   return (
     <View

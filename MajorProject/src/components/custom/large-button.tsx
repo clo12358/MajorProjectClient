@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, Text, useColorScheme, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
+import { useTheme } from "@/context/ThemeContext";
 import { Colors } from "../../constants/theme";
 
 type LargeButtonProps = {
@@ -20,8 +21,8 @@ export function LargeButton({
   textColor,
   disabled,
 }: LargeButtonProps) {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
+  const { isDark } = useTheme();
+  const theme = Colors[isDark ? "dark" : "light"];
 
   const buttonBackgroundColor = backgroundColor ?? theme.primary;
   const buttonTextColor = textColor ?? theme.text;

@@ -1,5 +1,6 @@
-import { Pressable, Text, useColorScheme } from "react-native";
+import { Pressable, Text } from "react-native";
 
+import { useTheme } from "@/context/ThemeContext";
 import { Colors } from "../../constants/theme";
 
 type PillButtonProps = {
@@ -13,8 +14,8 @@ export function PillButton({
   selected = false,
   onPress,
 }: PillButtonProps) {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
+  const { isDark } = useTheme();
+  const theme = Colors[isDark ? "dark" : "light"];
 
   return (
     <Pressable

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { ScrollView, useColorScheme, View } from "react-native";
+import { ScrollView, View } from "react-native";
 
+import { useTheme } from "@/context/ThemeContext";
 import api from "@/lib/axios";
 import { CalendarCard } from "../../components/custom/calendar-card";
 import { InfoCard } from "../../components/custom/info-card";
@@ -62,8 +63,8 @@ function getDayDifference(startDate: string, endDate: string): number {
 const todayString = formatDateString(new Date());
 
 export default function CalendarPage() {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
+  const { isDark } = useTheme();
+  const theme = Colors[isDark ? "dark" : "light"];
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [periodDates, setPeriodDates] = useState<string[]>([]);

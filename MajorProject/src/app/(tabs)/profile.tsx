@@ -1,8 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, useColorScheme, View } from "react-native";
+import { ActivityIndicator, Alert, View } from "react-native";
 
+import { useTheme } from "@/context/ThemeContext";
 import api from "@/lib/axios";
 import { generateAndShareReport } from "@/lib/generateReport";
 import { LargeButton } from "../../components/custom/large-button";
@@ -23,11 +24,10 @@ interface User {
 }
 
 export default function Profile() {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
+  const { isDark, toggleTheme } = useTheme();
+  const theme = Colors[isDark ? "dark" : "light"];
 
   const [notifications, setNotifications] = useState(true);
-  const [appearance, setAppearance] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [exportingReport, setExportingReport] = useState(false);
@@ -141,8 +141,8 @@ export default function Profile() {
             title="Appearance"
             icon="sunny-outline"
             type="switch"
-            value={appearance}
-            onValueChange={setAppearance}
+            value={isDark}
+            onValueChange={toggleTheme}
           />
 
           <SettingsRow

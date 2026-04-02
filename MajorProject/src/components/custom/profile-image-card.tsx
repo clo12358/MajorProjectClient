@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Image, Pressable, Text, useColorScheme, View } from "react-native";
+import { Image, Pressable, Text, View } from "react-native";
 
+import { useTheme } from "@/context/ThemeContext";
 import { Colors } from "../../constants/theme";
 
 type ProfileImageCardProps = {
@@ -12,8 +13,8 @@ export function ProfileImageCard({
   profileImage,
   onPress,
 }: ProfileImageCardProps) {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
+  const { isDark } = useTheme();
+  const theme = Colors[isDark ? "dark" : "light"];
 
   return (
     <View

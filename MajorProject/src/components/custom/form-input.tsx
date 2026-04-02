@@ -1,5 +1,6 @@
-import { Text, TextInputProps, useColorScheme, View } from "react-native";
+import { Text, TextInputProps, View } from "react-native";
 
+import { useTheme } from "@/context/ThemeContext";
 import { Colors } from "../../constants/theme";
 import { Input } from "../ui/input";
 
@@ -22,8 +23,8 @@ export function FormInput({
   keyboardType = "default",
   autoCapitalize = "none",
 }: FormInputProps) {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
+  const { isDark } = useTheme();
+  const theme = Colors[isDark ? "dark" : "light"];
 
   return (
     <View className="gap-2">

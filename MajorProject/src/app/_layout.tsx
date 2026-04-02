@@ -1,13 +1,22 @@
+import { ThemeProvider, useTheme } from "@/context/ThemeContext";
 import { Stack } from "expo-router";
-import { useColorScheme, View } from "react-native";
+import { View } from "react-native";
 import "../global.css";
 
-export default function RootLayout() {
-  const scheme = useColorScheme(); // "light" | "dark"
+function RootLayoutInner() {
+  const { isDark } = useTheme();
 
   return (
-    <View className={`flex-1 ${scheme === "dark" ? "dark" : ""} bg-background`}>
+    <View className={`flex-1 ${isDark ? "dark" : ""} bg-background`}>
       <Stack screenOptions={{ headerShown: false }} />
     </View>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <RootLayoutInner />
+    </ThemeProvider>
   );
 }

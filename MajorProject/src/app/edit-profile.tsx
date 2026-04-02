@@ -10,10 +10,10 @@ import {
   Pressable,
   ScrollView,
   Text,
-  useColorScheme,
-  View,
+  View
 } from "react-native";
 
+import { useTheme } from "@/context/ThemeContext";
 import api from "@/lib/axios";
 import { FormInput } from "../components/custom/form-input";
 import { LargeButton } from "../components/custom/large-button";
@@ -21,8 +21,8 @@ import { ProfileImageCard } from "../components/custom/profile-image-card";
 import { Colors } from "../constants/theme";
 
 export default function EditProfile() {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
+  const { isDark } = useTheme();
+  const theme = Colors[isDark ? "dark" : "light"];
 
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [newImageUri, setNewImageUri] = useState<string | null>(null);

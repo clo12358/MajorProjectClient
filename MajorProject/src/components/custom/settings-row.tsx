@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, Switch, Text, useColorScheme, View } from "react-native";
+import { Pressable, Switch, Text, View } from "react-native";
 
+import { useTheme } from "@/context/ThemeContext";
 import { Colors } from "../../constants/theme";
 
 type SettingsRowProps = {
@@ -22,8 +23,8 @@ export function SettingsRow({
   onValueChange,
   onPress,
 }: SettingsRowProps) {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
+  const { isDark } = useTheme();
+  const theme = Colors[isDark ? "dark" : "light"];
 
   const content = (
     <View

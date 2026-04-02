@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Text, useColorScheme, View } from "react-native";
+import { Text, View } from "react-native";
 
 import { Colors } from "@/constants/theme";
+import { useTheme } from "@/context/ThemeContext";
 
 export interface JournalEntry {
   id: number;
@@ -44,8 +45,8 @@ function formatDate(dateString?: string) {
 }
 
 export function JournalCard({ journal }: JournalCardProps) {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
+  const { isDark } = useTheme();
+  const theme = Colors[isDark ? "dark" : "light"];
 
   const mood = journal.feeling ? MOOD_CONFIG[journal.feeling] : null;
 

@@ -1,5 +1,6 @@
-import { Text, useColorScheme, View } from "react-native";
+import { Text, View } from "react-native";
 
+import { useTheme } from "@/context/ThemeContext";
 import { Colors } from "../../constants/theme";
 
 type SymptomItem = {
@@ -15,8 +16,8 @@ type SymptomsCardProps = {
 };
 
 export function SymptomsCard({ title, symptoms }: SymptomsCardProps) {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
+  const { isDark } = useTheme();
+  const theme = Colors[isDark ? "dark" : "light"];
 
   const RANK_COLORS = [theme.primary, theme.secondary, theme.accent];
 

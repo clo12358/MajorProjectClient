@@ -6,10 +6,10 @@ import {
   ScrollView,
   Text,
   TextInput,
-  useColorScheme,
-  View,
+  View
 } from "react-native";
 
+import { useTheme } from "@/context/ThemeContext";
 import api from "@/lib/axios";
 import { LargeButton } from "../components/custom/large-button";
 import { MoodCard } from "../components/custom/mood-card";
@@ -54,8 +54,9 @@ const apiValueToMoodLabel: Record<string, string> = {
 };
 
 export default function Journal() {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
+  const { isDark } = useTheme();
+  const theme = Colors[isDark ? "dark" : "light"];
+
   const params = useLocalSearchParams<{ dailyLogId?: string }>();
 
   const [selectedMood, setSelectedMood] = useState("Good");
@@ -71,7 +72,7 @@ export default function Journal() {
     { label: "Okay", icon: "remove-circle-outline" },
     { label: "Low", icon: "sad-outline" },
     { label: "Awful", icon: "skull-outline" },
-  ] as const;
+  ];
 
   const today = new Date();
 

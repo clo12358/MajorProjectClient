@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Image, Platform, Text, useColorScheme, View } from "react-native";
+import { Image, Platform, Text, View } from "react-native";
 
+import { useTheme } from "@/context/ThemeContext";
 import { Colors } from "../../constants/theme";
 import { LargeButton } from "./large-button";
 
@@ -19,8 +20,8 @@ export function ProfileCard({
   buttonTitle = "Edit Profile",
   onPressButton,
 }: ProfileCardProps) {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
+  const { isDark } = useTheme();
+  const theme = Colors[isDark ? "dark" : "light"];
 
   return (
     <View

@@ -1,5 +1,6 @@
-import { Text, useColorScheme } from "react-native";
+import { Text } from "react-native";
 
+import { useTheme } from "@/context/ThemeContext";
 import { Colors } from "../../constants/theme";
 import { Card } from "../ui/card";
 
@@ -9,8 +10,8 @@ type DayCardProps = {
 };
 
 export function DayCard({ date, cycleDay }: DayCardProps) {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
+  const { isDark } = useTheme();
+  const theme = Colors[isDark ? "dark" : "light"];
 
   return (
     <Card

@@ -4,16 +4,16 @@ import {
   Pressable,
   ScrollView,
   Text,
-  useColorScheme,
-  View,
+  View
 } from "react-native";
 
+import { useTheme } from "@/context/ThemeContext";
 import { PrivacySection } from "../components/custom/privacy-data";
 import { Colors } from "../constants/theme";
 
 export default function PrivacyData() {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
+  const { isDark } = useTheme();
+  const theme = Colors[isDark ? "dark" : "light"];
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
