@@ -1,13 +1,6 @@
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import {
-  Alert,
-  Modal,
-  Pressable,
-  ScrollView,
-  Text,
-  View
-} from "react-native";
+import { Alert, Modal, Pressable, ScrollView, Text, View } from "react-native";
 
 import { useTheme } from "@/context/ThemeContext";
 import api from "@/lib/axios";
@@ -69,9 +62,21 @@ const apiFeelingToLabel: Record<string, string> = {
   awful: "Awful",
 };
 
+function formatDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export default function Home() {
   const { isDark } = useTheme();
   const theme = Colors[isDark ? "dark" : "light"];
+
+  const today = new Date();
+  const todayString = formatDate(today);
+
+  const [selectedDate, setSelectedDate] = useState(todayString);
 
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
   const [showSymptomsModal, setShowSymptomsModal] = useState(false);
@@ -93,50 +98,53 @@ export default function Home() {
   const [cycleDay, setCycleDay] = useState<number | null>(null);
   const [quote, setQuote] = useState("The best is yet to come.");
 
-  const today = new Date();
-  const todayString = formatDate(today);
-
-  const days = Array.from({ length: 7 }, (_, index) => {
+  // Generate 30 days back and 30 days ahead
+  const days = Array.from({ length: 63 }, (_, index) => {
     const date = new Date(today);
-    date.setDate(today.getDate() - 3 + index);
+    date.setDate(today.getDate() - 30 + index);
     return {
       day: date.getDate().toString(),
       fullDate: date,
-      active: index === 3,
+      active: formatDate(date) === selectedDate,
     };
   });
 
-  const periodOptions = ["Light", "Medium", "Heavy", "Blood Clots"];
+  const isViewingToday = selectedDate === todayString;
 
-  const formattedToday = today.toLocaleDateString("en-GB", {
+  const selectedDateObj = new Date(`${selectedDate}T00:00:00`);
+  const formattedSelectedDate = selectedDateObj.toLocaleDateString("en-GB", {
     month: "long",
     day: "numeric",
   });
 
+  const periodOptions = ["Light", "Medium", "Heavy", "Blood Clots"];
   const moodCategory = categories.find((c) => c.name === "Mood");
   const feelingSymptoms = moodCategory?.symptoms.slice(0, 8) ?? [];
-
   const allSymptoms = categories.flatMap((c) => c.symptoms);
+
+  useEffect(() => {
+    fetchJournalPreviewForDate(selectedDate);
+    setSelectedPeriod(null);
+  }, [selectedDate]);
 
   useEffect(() => {
     fetchActivePeriod();
     fetchCurrentCycle();
     fetchCategories();
     fetchQuote();
-    fetchTodayJournalPreview();
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      fetchTodayJournalPreview();
-    }, []),
+      fetchJournalPreviewForDate(selectedDate);
+    }, [selectedDate]),
   );
 
-  function formatDate(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
+  function truncateText(text: string, maxLength = 70) {
+    const trimmed = text.trim();
+    if (!trimmed) return "";
+    if (trimmed.length <= maxLength) return trimmed;
+    return `${trimmed.slice(0, maxLength).trim()}...`;
   }
 
   function getJournalFromDailyLog(data: DailyLogResponse) {
@@ -152,23 +160,14 @@ export default function Home() {
     };
   }
 
-  function truncateText(text: string, maxLength = 70) {
-    const trimmed = text.trim();
-    if (!trimmed) return "";
-    if (trimmed.length <= maxLength) return trimmed;
-    return `${trimmed.slice(0, maxLength).trim()}...`;
-  }
-
   async function fetchCurrentCycle() {
     try {
       const response = await api.get("/cycles");
       const cycles: Cycle[] = response.data ?? [];
       const activeCycle = cycles.find((cycle) => cycle.end_date === null);
       if (!activeCycle) return setCycleDay(null);
-      const today = new Date();
-      const todayStr = formatDate(today);
       const start = new Date(`${activeCycle.start_date}T00:00:00`);
-      const end = new Date(`${todayStr}T00:00:00`);
+      const end = new Date(`${todayString}T00:00:00`);
       const day =
         Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) +
         1;
@@ -196,34 +195,32 @@ export default function Home() {
         api.get("/categories"),
         api.get("/symptoms"),
       ]);
-
       const cats: Category[] = catRes.data.map((cat: any) => ({
         ...cat,
         symptoms: symRes.data.filter((s: Symptom) => s.category_id === cat.id),
       }));
-
       setCategories(cats);
     } catch (error) {
       console.error("Failed to fetch categories/symptoms:", error);
     }
   }
 
-  async function fetchOrCreateTodayLog(): Promise<number | null> {
+  async function fetchOrCreateLogForDate(date: string): Promise<number | null> {
     try {
-      const response = await api.post("/daily-logs", { date: todayString });
+      const response = await api.post("/daily-logs", { date });
       const logId = response.data.id;
       setTodayLogId(logId);
       return logId;
     } catch (error: any) {
       const message = error.response?.data?.message;
-      Alert.alert("Error", message ?? "Could not create today's log.");
+      Alert.alert("Error", message ?? "Could not create log for this date.");
       return null;
     }
   }
 
-  async function fetchTodayJournalPreview() {
+  async function fetchJournalPreviewForDate(date: string) {
     try {
-      const logId = await fetchOrCreateTodayLog();
+      const logId = await fetchOrCreateLogForDate(date);
       if (!logId) {
         setJournalPreview("");
         setJournalFeeling(null);
@@ -260,7 +257,7 @@ export default function Home() {
   }
 
   async function handleOpenSymptomsModal() {
-    const logId = await fetchOrCreateTodayLog();
+    const logId = await fetchOrCreateLogForDate(selectedDate);
     if (!logId) return;
     setTodayLogId(logId);
     setShowSymptomsModal(true);
@@ -269,7 +266,7 @@ export default function Home() {
   async function handleOpenJournal() {
     setOpeningJournal(true);
     try {
-      const logId = await fetchOrCreateTodayLog();
+      const logId = await fetchOrCreateLogForDate(selectedDate);
       if (!logId) return;
       router.push({
         pathname: "/journal",
@@ -329,19 +326,22 @@ export default function Home() {
         periodId = activePeriod.id;
       } else {
         const periodResponse = await api.post("/periods", {
-          start_date: todayString,
+          start_date: selectedDate,
         });
         periodId = periodResponse.data.period.id;
         await fetchActivePeriod();
       }
 
       await api.put(`/periods/${periodId}/days`, {
-        date: todayString,
+        date: selectedDate,
         flow,
         has_clots,
       });
 
-      Alert.alert("Logged!", `Period logged as ${selectedPeriod} for today.`);
+      Alert.alert(
+        "Logged!",
+        `Period logged as ${selectedPeriod} for ${formattedSelectedDate}.`,
+      );
       setSelectedPeriod(null);
     } catch (error: any) {
       const message = error.response?.data?.message;
@@ -362,8 +362,11 @@ export default function Home() {
 
     setEndingPeriod(true);
     try {
-      await api.put(`/periods/${activePeriod.id}`, { end_date: todayString });
-      Alert.alert("Period Ended", `Your period was ended on ${todayString}.`);
+      await api.put(`/periods/${activePeriod.id}`, { end_date: selectedDate });
+      Alert.alert(
+        "Period Ended",
+        `Your period was ended on ${formattedSelectedDate}.`,
+      );
       setSelectedPeriod(null);
       await fetchActivePeriod();
     } catch (error: any) {
@@ -397,9 +400,38 @@ export default function Home() {
         showsVerticalScrollIndicator={false}
         bounces
       >
-        <DateChips days={days} />
+        <DateChips
+          days={days}
+          selectedDate={selectedDate}
+          onSelectDate={setSelectedDate}
+        />
 
-        <DayCard date={formattedToday} cycleDay={cycleDay ?? 0} />
+        {!isViewingToday && (
+          <Pressable
+            onPress={() => setSelectedDate(todayString)}
+            style={{
+              backgroundColor: theme.accent,
+              borderRadius: 12,
+              paddingHorizontal: 16,
+              paddingVertical: 10,
+              marginBottom: 12,
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ color: theme.text, fontSize: 13 }}>
+              Viewing {formattedSelectedDate}
+            </Text>
+            <Text
+              style={{ color: theme.primary, fontSize: 13, fontWeight: "600" }}
+            >
+              Back to Today →
+            </Text>
+          </Pressable>
+        )}
+
+        <DayCard date={formattedSelectedDate} cycleDay={cycleDay ?? 0} />
 
         <View className="mt-5">
           <QuoteCard quote={quote} />
@@ -409,7 +441,7 @@ export default function Home() {
           <SectionCard
             title={
               savedSymptomNames.length > 0
-                ? "Symptoms logged today"
+                ? `Symptoms logged on ${formattedSelectedDate}`
                 : "How are you feeling?"
             }
           >
@@ -419,9 +451,7 @@ export default function Home() {
                   <View
                     key={name}
                     className="rounded-full px-3 py-1"
-                    style={{
-                      backgroundColor: theme.accent,
-                    }}
+                    style={{ backgroundColor: theme.accent }}
                   >
                     <Text
                       className="text-sm font-medium"
@@ -433,7 +463,6 @@ export default function Home() {
                 ))}
               </View>
             ) : (
-              // Default state — show feeling picker
               <View className="flex-row flex-wrap gap-2">
                 {feelingSymptoms.map((symptom) => (
                   <PillButton
@@ -527,7 +556,8 @@ export default function Home() {
               className="text-sm mb-4"
               style={{ color: theme.textSecondary }}
             >
-              {journalPreview || "No journal entry for today yet."}
+              {journalPreview ||
+                `No journal entry for ${formattedSelectedDate} yet.`}
             </Text>
 
             <LargeButton
