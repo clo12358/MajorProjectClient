@@ -120,6 +120,9 @@ export default function Profile() {
           name={user?.name ?? "Unknown"}
           email={user?.email ?? "Unknown"}
           profileImage={user?.profile_image ?? null}
+          dob={user?.dob ?? null}
+          height={user?.height ?? null}
+          weight={user?.weight ?? null}
           buttonTitle="Edit Profile"
           onPressButton={() => router.push("/edit-profile")}
         />
