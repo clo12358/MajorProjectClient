@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
-import { Image, Platform, Text, View } from "react-native";
+import { Image, Linking, Platform, Pressable, Text, View } from "react-native";
 
 import { useTheme } from "@/context/ThemeContext";
 import { Colors } from "../../constants/theme";
@@ -30,6 +30,27 @@ function calculateAge(dob: string): number | null {
   return age;
 }
 
+type BmiRange = {
+  label: string;
+  min: number;
+  max: number;
+  color: string;
+};
+
+const BMI_RANGES: BmiRange[] = [
+  { label: "Underweight", min: 0, max: 18.5, color: "#93C5FD" },
+  { label: "Normal", min: 18.5, max: 25, color: "#6EE7B7" },
+  { label: "Overweight", min: 25, max: 30, color: "#FCD34D" },
+  { label: "Obese", min: 30, max: 40, color: "#FCA5A5" },
+];
+
+function getBmiRange(bmi: number): BmiRange {
+  return (
+    BMI_RANGES.find((r) => bmi >= r.min && bmi < r.max) ??
+    BMI_RANGES[BMI_RANGES.length - 1]
+  );
+}
+
 export function ProfileCard({
   name,
   email,
@@ -45,25 +66,20 @@ export function ProfileCard({
 
   const age = dob ? calculateAge(dob) : null;
   const [bmi, setBmi] = useState<string | null>(null);
-  const [bmiCategory, setBmiCategory] = useState<string | null>(null);
 
   useEffect(() => {
     if (!weight || !height) return;
 
-    // Fetching BMI API
     async function fetchBmi() {
       try {
-        const heightInMeters = parseFloat(height!) / 100; // Convert cm to m
+        const heightInMeters = parseFloat(height!) / 100;
         const weightInKg = parseFloat(weight!);
-
         if (isNaN(heightInMeters) || isNaN(weightInKg)) return;
-
         const response = await fetch(
           `https://bmicalculatorapi.vercel.app/api/bmi/${weightInKg}/${heightInMeters}`,
         );
         const data = await response.json();
         setBmi(data.bmi?.toFixed(1) ?? null);
-        setBmiCategory(data.category ?? null);
       } catch (error) {
         console.error("Failed to fetch BMI:", error);
       }
@@ -71,6 +87,9 @@ export function ProfileCard({
 
     fetchBmi();
   }, [weight, height]);
+
+  const bmiNumber = bmi ? parseFloat(bmi) : null;
+  const bmiRange = bmiNumber !== null ? getBmiRange(bmiNumber) : null;
 
   const stats = [
     { label: "Age", value: age !== null ? `${age}` : "—" },
@@ -161,24 +180,33 @@ export function ProfileCard({
             >
               {stat.label}
             </Text>
+            {stat.label === "BMI" && bmiRange && (
+              <Pressable
+                onPress={() =>
+                  Linking.openURL("https://www.healthhero.ie/bmi-calculator")
+                }
+                style={{
+                  backgroundColor: bmiRange.color + "33",
+                  borderRadius: 999,
+                  paddingHorizontal: 6,
+                  paddingVertical: 2,
+                  marginTop: 4,
+                }}
+              >
+                <Text
+                  style={{
+                    color: bmiRange.color,
+                    fontSize: 9,
+                    fontWeight: "700",
+                  }}
+                >
+                  {bmiRange.label}
+                </Text>
+              </Pressable>
+            )}
           </View>
         ))}
       </View>
-
-      {/* BMI category badge */}
-      {bmiCategory && (
-        <View
-          className="rounded-xl px-3 py-2 mb-4 items-center"
-          style={{ backgroundColor: theme.background }}
-        >
-          <Text className="text-xs" style={{ color: theme.textSecondary }}>
-            BMI Category:{" "}
-            <Text style={{ color: theme.text, fontWeight: "600" }}>
-              {bmiCategory}
-            </Text>
-          </Text>
-        </View>
-      )}
 
       <LargeButton title={buttonTitle} onPress={onPressButton} />
     </View>

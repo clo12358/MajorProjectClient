@@ -1,19 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import {
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View
-} from "react-native";
+import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 
 import { useTheme } from "@/context/ThemeContext";
 import api from "@/lib/axios";
 import { LargeButton } from "../components/custom/large-button";
 import { MoodCard } from "../components/custom/mood-card";
-import { Toast } from "../components/custom/toast";
 import { Colors } from "../constants/theme";
 
 interface DailyLogResponse {
@@ -64,7 +57,6 @@ export default function Journal() {
   const [dailyLogId, setDailyLogId] = useState<number | null>(null);
   const [loadingLog, setLoadingLog] = useState(true);
   const [savingEntry, setSavingEntry] = useState(false);
-  const [toastVisible, setToastVisible] = useState(false);
 
   const moods = [
     { label: "Great", icon: "heart-outline" },
@@ -95,9 +87,7 @@ export default function Journal() {
 
   function getParamDailyLogId(): number | null {
     const raw = params.dailyLogId;
-
     if (!raw) return null;
-
     const parsed = Number(raw);
     return Number.isNaN(parsed) ? null : parsed;
   }
@@ -109,23 +99,18 @@ export default function Journal() {
         feeling: data.journal.feeling ?? "good",
       };
     }
-
     if (typeof data.entry === "string" || typeof data.feeling === "string") {
       return {
         entry: data.entry ?? "",
         feeling: data.feeling ?? "good",
       };
     }
-
     return null;
   }
 
   async function createOrFetchTodayLog(): Promise<number | null> {
     try {
-      const response = await api.post("/daily-logs", {
-        date: todayString,
-      });
-
+      const response = await api.post("/daily-logs", { date: todayString });
       const log: DailyLogResponse = response.data;
       return log.id ?? null;
     } catch (error) {
@@ -138,15 +123,11 @@ export default function Journal() {
     try {
       const response = await api.get(`/daily-logs/${logId}`);
       const data: DailyLogResponse = response.data;
-
       const existingJournal = extractJournalFromDailyLog(data);
-
       if (existingJournal) {
         setEntry(existingJournal.entry);
-
         const mappedMood =
           apiValueToMoodLabel[existingJournal.feeling.toLowerCase()] ?? "Good";
-
         setSelectedMood(mappedMood);
       } else {
         setEntry("");
@@ -161,19 +142,15 @@ export default function Journal() {
 
   const initialiseJournal = useCallback(async () => {
     setLoadingLog(true);
-
     try {
       let logId = getParamDailyLogId();
-
       if (!logId) {
         logId = await createOrFetchTodayLog();
       }
-
       if (!logId) {
         setDailyLogId(null);
         return;
       }
-
       setDailyLogId(logId);
       await fetchExistingJournal(logId);
     } finally {
@@ -189,54 +166,33 @@ export default function Journal() {
 
   async function saveWithPost(
     logId: number,
-    payload: {
-      entry: string;
-      feeling: string;
-    },
+    payload: { entry: string; feeling: string },
   ) {
     return api.post(`/daily-logs/${logId}/journal`, payload);
   }
 
   async function saveWithPut(
     logId: number,
-    payload: {
-      entry: string;
-      feeling: string;
-    },
+    payload: { entry: string; feeling: string },
   ) {
     return api.put(`/daily-logs/${logId}/journal`, payload);
   }
 
   async function handleSave() {
-    if (!dailyLogId) {
-      return;
-    }
-
-    if (!entry.trim()) {
-      return;
-    }
+    if (!dailyLogId || !entry.trim()) return;
 
     const apiFeeling = moodToApiValue[selectedMood];
+    if (!apiFeeling) return;
 
-    if (!apiFeeling) {
-      return;
-    }
-
-    const payload = {
-      entry: entry.trim(),
-      feeling: apiFeeling,
-    };
+    const payload = { entry: entry.trim(), feeling: apiFeeling };
 
     setSavingEntry(true);
-
     try {
       let response;
-
       try {
         response = await saveWithPost(dailyLogId, payload);
       } catch (postError: any) {
         const status = postError.response?.status;
-
         if (
           status === 404 ||
           status === 405 ||
@@ -249,15 +205,7 @@ export default function Journal() {
         }
       }
 
-      const savedJournal: JournalResponse = response.data;
-
-      setEntry(savedJournal.entry ?? payload.entry);
-      setSelectedMood(
-        apiValueToMoodLabel[savedJournal.feeling?.toLowerCase()] ??
-          selectedMood,
-      );
-
-      setToastVisible(true);
+      router.replace({ pathname: "/home", params: { journalSaved: "1" } });
     } catch (error: any) {
       console.error("Journal save error:", error.response?.data ?? error);
     } finally {
@@ -280,7 +228,6 @@ export default function Journal() {
           <Pressable onPress={() => router.back()} className="mr-3">
             <Ionicons name="arrow-back" size={22} color={theme.text} />
           </Pressable>
-
           <View>
             <Text className="text-2xl font-bold" style={{ color: theme.text }}>
               Journal
@@ -330,12 +277,6 @@ export default function Journal() {
           onPress={handleSave}
         />
       </ScrollView>
-
-      <Toast
-        message="Journal updated"
-        visible={toastVisible}
-        onHide={() => setToastVisible(false)}
-      />
     </View>
   );
 }

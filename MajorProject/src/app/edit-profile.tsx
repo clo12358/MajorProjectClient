@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -10,7 +10,7 @@ import {
   Pressable,
   ScrollView,
   Text,
-  View
+  View,
 } from "react-native";
 
 import { useTheme } from "@/context/ThemeContext";
@@ -24,8 +24,8 @@ export default function EditProfile() {
   const { isDark } = useTheme();
   const theme = Colors[isDark ? "dark" : "light"];
 
+  const [userId, setUserId] = useState<number | null>(null);
   const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [newImageUri, setNewImageUri] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [height, setHeight] = useState("");
   const [weight, setWeight] = useState("");
@@ -35,49 +35,25 @@ export default function EditProfile() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetchProfile();
+    async function init() {
+      try {
+        const response = await api.get("/me");
+        const user = response.data;
+        setUserId(user.id);
+        setName(user.name ?? "");
+        setHeight(user.height ? String(user.height) : "");
+        setWeight(user.weight ? String(user.weight) : "");
+        setDateOfBirth(user.dob ? new Date(user.dob) : null);
+        const saved = await AsyncStorage.getItem(`avatar_url_${user.id}`);
+        if (saved) setProfileImage(saved);
+      } catch (error) {
+        Alert.alert("Error", "Failed to load profile.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    init();
   }, []);
-
-  async function fetchProfile() {
-    try {
-      const response = await api.get("/me");
-      const user = response.data;
-
-      setName(user.name ?? "");
-      setHeight(user.height ? String(user.height) : "");
-      setWeight(user.weight ? String(user.weight) : "");
-      setDateOfBirth(user.dob ? new Date(user.dob) : null);
-      setProfileImage(user.profile_image ?? null);
-    } catch (error) {
-      Alert.alert("Error", "Failed to load profile.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handlePickImage() {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert(
-        "Permission required",
-        "Please allow access to your photo library.",
-      );
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-
-    if (!result.canceled) {
-      const uri = result.assets[0].uri;
-      setProfileImage(uri);
-      setNewImageUri(uri);
-    }
-  }
 
   function formatDate(date: Date): string {
     const year = date.getFullYear();
@@ -90,32 +66,11 @@ export default function EditProfile() {
     setSaving(true);
     try {
       const formData = new FormData();
-
       formData.append("_method", "PUT");
-
       if (name) formData.append("name", name);
       if (dateOfBirth) formData.append("dob", formatDate(dateOfBirth));
       if (height) formData.append("height", String(Number(height)));
       if (weight) formData.append("weight", String(Number(weight)));
-
-      if (newImageUri) {
-        if (Platform.OS === "web") {
-          // On web, expo-image-picker returns a blob: URL — fetch it and convert to a Blob
-          const res = await fetch(newImageUri);
-          const blob = await res.blob();
-          const ext = blob.type === "image/png" ? "png" : "jpg";
-          formData.append("profile_image", blob, `profile.${ext}`);
-        } else {
-          const filename = newImageUri.split("/").pop() ?? "profile.jpg";
-          const ext = filename.split(".").pop()?.toLowerCase() ?? "jpg";
-          const mimeType = ext === "png" ? "image/png" : "image/jpeg";
-          formData.append("profile_image", {
-            uri: newImageUri,
-            type: mimeType,
-            name: filename,
-          } as any);
-        }
-      }
 
       await api.post("/me", formData, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -123,8 +78,6 @@ export default function EditProfile() {
 
       router.replace({ pathname: "/profile", params: { updated: "true" } });
     } catch (error: any) {
-      console.log("Status:", error.response?.status);
-      console.log("Full error:", JSON.stringify(error.response?.data, null, 2));
       const errors = error.response?.data?.errors;
       if (errors) {
         const allErrors = Object.entries(errors)
@@ -177,18 +130,13 @@ export default function EditProfile() {
             Edit Profile
           </Text>
         </View>
-
-        <Pressable onPress={() => console.log("Delete account pressed")}>
-          <Text
-            className="text-sm font-semibold underline"
-            style={{ color: theme.dangerText }}
-          >
-            Delete
-          </Text>
-        </Pressable>
       </View>
 
-      <ProfileImageCard profileImage={profileImage} onPress={handlePickImage} />
+      <ProfileImageCard
+        userId={userId ?? 0}
+        profileImage={profileImage}
+        onSelect={setProfileImage}
+      />
 
       <View className="gap-4">
         <FormInput
@@ -199,7 +147,6 @@ export default function EditProfile() {
           autoCapitalize="words"
         />
 
-        {/* Date of Birth Picker */}
         <View>
           <Text
             className="text-sm font-medium mb-1"

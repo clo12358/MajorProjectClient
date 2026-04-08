@@ -70,6 +70,8 @@ export function DateChips({
     return theme.secondary;
   }
 
+  const DAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"];
+
   return (
     <View className="mb-5">
       <ScrollView
@@ -99,27 +101,43 @@ export function DateChips({
                 <TouchableOpacity
                   key={item.fullDate.toISOString()}
                   onPress={() => onSelectDate(dateString)}
-                  style={{
-                    height: 40,
-                    width: 40,
-                    borderRadius: 20,
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: getChipBackground(dateString, isSelected),
-                  }}
+                  style={{ alignItems: "center", gap: 4 }}
                 >
                   <Text
                     style={{
-                      fontSize: 11,
-                      fontWeight:
-                        isSelected || dateString === todayString
-                          ? "700"
-                          : "500",
-                      color: theme.text,
+                      fontSize: 10,
+                      fontWeight: "500",
+                      color: theme.textSecondary,
                     }}
                   >
-                    {item.day}
+                    {DAY_LABELS[item.fullDate.getDay()]}
                   </Text>
+                  <View
+                    style={{
+                      height: 40,
+                      width: 40,
+                      borderRadius: 20,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor: getChipBackground(
+                        dateString,
+                        isSelected,
+                      ),
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 11,
+                        fontWeight:
+                          isSelected || dateString === todayString
+                            ? "700"
+                            : "500",
+                        color: theme.text,
+                      }}
+                    >
+                      {item.day}
+                    </Text>
+                  </View>
                 </TouchableOpacity>
               );
             })}

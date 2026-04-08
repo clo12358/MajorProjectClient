@@ -54,7 +54,7 @@ export function MoodCard({
                 className="h-12 w-12 rounded-full items-center justify-center mb-2"
                 style={{
                   backgroundColor: isSelected
-                    ? theme.primaryPressed
+                    ? theme.primary
                     : theme.background,
                   borderWidth: 1,
                   borderColor: theme.backgroundSelected,

@@ -38,6 +38,9 @@ interface DailySymptom {
   symptom?: {
     id: number;
     name: string;
+    category?: {
+      name: string;
+    };
   };
 }
 
@@ -61,6 +64,8 @@ function getDayDifference(startDate: string, endDate: string): number {
 }
 
 const todayString = formatDateString(new Date());
+
+const SEX_CATEGORY = "Sex & Sex Drive";
 
 export default function CalendarPage() {
   const { isDark } = useTheme();
@@ -167,7 +172,16 @@ export default function CalendarPage() {
     }
   }
 
-  // Find which cycle the displayDate falls within, and calculate the day number
+  const sexDates = useMemo(() => {
+    return Object.entries(dailyLogsByDate)
+      .filter(([_, log]) =>
+        log.daily_symptoms?.some(
+          (ds) => ds.symptom?.category?.name === SEX_CATEGORY,
+        ),
+      )
+      .map(([date]) => date);
+  }, [dailyLogsByDate]);
+
   const cycleDay = useMemo(() => {
     if (cycles.length === 0) return null;
 
@@ -201,7 +215,6 @@ export default function CalendarPage() {
       ?.map((ds) => ds.symptom?.name)
       .filter((name): name is string => Boolean(name)) ?? [];
 
-  // Whether this date has any logged data at all
   const dateHasNoData =
     !selectedDayLog && !isPeriodDate && symptomNames.length === 0;
 
@@ -245,13 +258,23 @@ export default function CalendarPage() {
             selectedDate={selectedDate}
             onSelectDate={setSelectedDate}
             periodDates={periodDates}
+            sexDates={sexDates}
           />
 
           <View className="mt-4">
             <Legend
               items={[
-                { label: "Today", color: theme.primaryPressed },
-                { label: "Period Day", color: theme.accent },
+                { label: "Today", color: theme.primary },
+                {
+                  label: "Period Day",
+                  color: theme.accent,
+                  icon: "water",
+                },
+                {
+                  label: "Sex & Sex Drive",
+                  color: theme.secondary,
+                  icon: "heart",
+                },
               ]}
             />
           </View>

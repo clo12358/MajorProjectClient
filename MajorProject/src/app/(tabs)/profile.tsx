@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, View } from "react-native";
+import { ActivityIndicator, Alert, ScrollView, View } from "react-native";
 
 import { useTheme } from "@/context/ThemeContext";
 import api from "@/lib/axios";
@@ -29,6 +29,7 @@ export default function Profile() {
 
   const [notifications, setNotifications] = useState(true);
   const [user, setUser] = useState<User | null>(null);
+  const [localAvatar, setLocalAvatar] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [exportingReport, setExportingReport] = useState(false);
   const [quote, setQuote] = useState(
@@ -39,13 +40,25 @@ export default function Profile() {
   const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
-    fetchProfile();
     fetchQuote();
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      fetchProfile();
+      async function load() {
+        try {
+          const response = await api.get("/me");
+          const u = response.data;
+          setUser(u);
+          const saved = await AsyncStorage.getItem(`avatar_url_${u.id}`);
+          setLocalAvatar(saved ?? null);
+        } catch (error) {
+          console.error("Failed to fetch profile:", error);
+        } finally {
+          setLoading(false);
+        }
+      }
+      load();
     }, []),
   );
 
@@ -55,17 +68,6 @@ export default function Profile() {
       router.setParams({ updated: "" });
     }
   }, [updated]);
-
-  async function fetchProfile() {
-    try {
-      const response = await api.get("/me");
-      setUser(response.data);
-    } catch (error) {
-      console.error("Failed to fetch profile:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   async function fetchQuote() {
     try {
@@ -115,68 +117,70 @@ export default function Profile() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
-      <View className="px-6 pt-10">
-        <ProfileCard
-          name={user?.name ?? "Unknown"}
-          email={user?.email ?? "Unknown"}
-          profileImage={user?.profile_image ?? null}
-          dob={user?.dob ?? null}
-          height={user?.height ?? null}
-          weight={user?.weight ?? null}
-          buttonTitle="Edit Profile"
-          onPressButton={() => router.push("/edit-profile")}
-        />
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View className="px-6 pt-10">
+          <ProfileCard
+            name={user?.name ?? "Unknown"}
+            email={user?.email ?? "Unknown"}
+            profileImage={localAvatar}
+            dob={user?.dob ?? null}
+            height={user?.height ?? null}
+            weight={user?.weight ?? null}
+            buttonTitle="Edit Profile"
+            onPressButton={() => router.push("/edit-profile")}
+          />
 
-        <View className="mt-5">
-          <QuoteCard quote={quote} />
+          <View className="mt-5">
+            <QuoteCard quote={quote} />
+          </View>
+
+          <View className="mt-5 gap-4">
+            <SettingsRow
+              title="Notifications"
+              icon="notifications-outline"
+              type="switch"
+              value={notifications}
+              onValueChange={setNotifications}
+            />
+
+            <SettingsRow
+              title="Appearance"
+              icon="sunny-outline"
+              type="switch"
+              value={isDark}
+              onValueChange={toggleTheme}
+            />
+
+            <SettingsRow
+              title="Privacy & Data"
+              subtitle="Manage your data"
+              icon="shield-checkmark-outline"
+              type="link"
+              onPress={() => router.push("/privacy-data")}
+            />
+
+            <SettingsRow
+              title={exportingReport ? "Generating Report..." : "Export Data"}
+              subtitle="Download a PDF report for your doctor"
+              icon={exportingReport ? "hourglass-outline" : "download-outline"}
+              type="link"
+              onPress={exportingReport ? undefined : handleExportReport}
+            />
+          </View>
+
+          <View className="mt-6">
+            <LargeButton
+              title="Log Out"
+              icon="log-out-outline"
+              backgroundColor={theme.danger}
+              textColor={theme.dangerText}
+              onPress={handleLogout}
+            />
+          </View>
+
+          <View className="h-10" />
         </View>
-
-        <View className="mt-5 gap-4">
-          <SettingsRow
-            title="Notifications"
-            icon="notifications-outline"
-            type="switch"
-            value={notifications}
-            onValueChange={setNotifications}
-          />
-
-          <SettingsRow
-            title="Appearance"
-            icon="sunny-outline"
-            type="switch"
-            value={isDark}
-            onValueChange={toggleTheme}
-          />
-
-          <SettingsRow
-            title="Privacy & Data"
-            subtitle="Manage your data"
-            icon="shield-checkmark-outline"
-            type="link"
-            onPress={() => router.push("/privacy-data")}
-          />
-
-          <SettingsRow
-            title={exportingReport ? "Generating Report..." : "Export Data"}
-            subtitle="Download a PDF report for your doctor"
-            icon={exportingReport ? "hourglass-outline" : "download-outline"}
-            type="link"
-            onPress={exportingReport ? undefined : handleExportReport}
-          />
-        </View>
-
-        <View className="mt-6">
-          <LargeButton
-            title="Log Out"
-            icon="log-out-outline"
-            backgroundColor={theme.danger}
-            textColor={theme.dangerText}
-            onPress={handleLogout}
-          />
-        </View>
-
-        <View className="h-10" />
-      </View>
+      </ScrollView>
 
       <Toast
         message="Profile updated successfully"

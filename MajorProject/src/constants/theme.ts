@@ -10,9 +10,9 @@ export const Colors = {
     backgroundSelected: "#F0F4F4",
 
     primary: "#C3DCDB",
-    primaryPressed: "#9FBFBE",
+    primaryPressed: "#7AA3A2",
     secondary: "#D1E2F5",
-    secondaryPressed: "#A8C8E1",
+    secondaryPressed: "#7AAAC8",
     accent: "#FDDFD8",
 
     danger: "#FBE3E6",
@@ -28,10 +28,10 @@ export const Colors = {
     backgroundSelected: "#242C2C",
 
     primary: "#5A8F8D",
-    primaryPressed: "#3D7775",
+    primaryPressed: "#2A5E5C",
 
     secondary: "#5A7FA6",
-    secondaryPressed: "#405C7F",
+    secondaryPressed: "#2C4460",
 
     accent: "#9E8A80",
 

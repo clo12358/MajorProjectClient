@@ -1,4 +1,4 @@
-import { router, useFocusEffect } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { Alert, Modal, Pressable, ScrollView, Text, View } from "react-native";
 
@@ -11,6 +11,7 @@ import { PillButton } from "../../components/custom/pill-button";
 import { QuoteCard } from "../../components/custom/quote-card";
 import { SectionCard } from "../../components/custom/section-card";
 import { SymptomCategorySection } from "../../components/custom/symptom-category";
+import { Toast } from "../../components/custom/toast";
 import { Colors } from "../../constants/theme";
 
 const flowMap: Record<string, { flow: string; has_clots: boolean }> = {
@@ -72,12 +73,12 @@ function formatDate(date: Date): string {
 export default function Home() {
   const { isDark } = useTheme();
   const theme = Colors[isDark ? "dark" : "light"];
+  const params = useLocalSearchParams<{ journalSaved?: string }>();
 
   const today = new Date();
   const todayString = formatDate(today);
 
   const [selectedDate, setSelectedDate] = useState(todayString);
-
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
   const [showSymptomsModal, setShowSymptomsModal] = useState(false);
   const [selectedSymptomIds, setSelectedSymptomIds] = useState<number[]>([]);
@@ -97,8 +98,8 @@ export default function Home() {
   } | null>(null);
   const [cycleDay, setCycleDay] = useState<number | null>(null);
   const [quote, setQuote] = useState("The best is yet to come.");
+  const [toastVisible, setToastVisible] = useState(false);
 
-  // Generate 30 days back and 30 days ahead
   const days = Array.from({ length: 63 }, (_, index) => {
     const date = new Date(today);
     date.setDate(today.getDate() - 30 + index);
@@ -121,6 +122,13 @@ export default function Home() {
   const moodCategory = categories.find((c) => c.name === "Mood");
   const feelingSymptoms = moodCategory?.symptoms.slice(0, 8) ?? [];
   const allSymptoms = categories.flatMap((c) => c.symptoms);
+
+  useEffect(() => {
+    if (params.journalSaved === "1") {
+      setToastVisible(true);
+      router.setParams({ journalSaved: undefined });
+    }
+  }, [params.journalSaved]);
 
   useEffect(() => {
     fetchJournalPreviewForDate(selectedDate);
@@ -410,23 +418,40 @@ export default function Home() {
           <Pressable
             onPress={() => setSelectedDate(todayString)}
             style={{
-              backgroundColor: theme.accent,
-              borderRadius: 12,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              backgroundColor: theme.backgroundElement,
+              borderRadius: 16,
               paddingHorizontal: 16,
               paddingVertical: 10,
-              marginBottom: 12,
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
+              marginBottom: 14,
+              borderWidth: 1,
+              borderColor: theme.primary,
             }}
           >
-            <Text style={{ color: theme.text, fontSize: 13 }}>
-              Viewing {formattedSelectedDate}
-            </Text>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+            >
+              <View
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: 4,
+                  backgroundColor: theme.primary,
+                }}
+              />
+              <Text style={{ color: theme.textSecondary, fontSize: 13 }}>
+                Viewing{" "}
+                <Text style={{ color: theme.text, fontWeight: "600" }}>
+                  {formattedSelectedDate}
+                </Text>
+              </Text>
+            </View>
             <Text
               style={{ color: theme.primary, fontSize: 13, fontWeight: "600" }}
             >
-              Back to Today →
+              Today →
             </Text>
           </Pressable>
         )}
@@ -643,6 +668,12 @@ export default function Home() {
           </View>
         </View>
       </Modal>
+
+      <Toast
+        message="Journal saved"
+        visible={toastVisible}
+        onHide={() => setToastVisible(false)}
+      />
     </>
   );
 }
