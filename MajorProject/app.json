@@ -22,7 +22,14 @@
     "web": {
       "output": "static",
       "favicon": "./assets/images/favicon.png",
-      "bundler": "metro"
+      "bundler": "metro",
+      "name": "Míra",
+      "shortName": "Míra",
+      "description": "Cycle tracking app",
+      "themeColor": "#ffffff",
+      "backgroundColor": "#ffffff",
+      "display": "standalone",
+      "startUrl": "/"
     },
     "plugins": [
       "expo-router",
