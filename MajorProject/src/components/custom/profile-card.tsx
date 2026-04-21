@@ -38,10 +38,10 @@ type BmiRange = {
 };
 
 const BMI_RANGES: BmiRange[] = [
-  { label: "Underweight", min: 0, max: 18.5, color: "#93C5FD" },
-  { label: "Normal", min: 18.5, max: 25, color: "#6EE7B7" },
-  { label: "Overweight", min: 25, max: 30, color: "#FCD34D" },
-  { label: "Obese", min: 30, max: 40, color: "#FCA5A5" },
+  { label: "Underweight", min: 0, max: 18.5, color: "#1D6FA4" },
+  { label: "Normal", min: 18.5, max: 25, color: "#0F7A4F" },
+  { label: "Overweight", min: 25, max: 30, color: "#92580A" },
+  { label: "Obese", min: 30, max: 40, color: "#B91C1C" },
 ];
 
 function getBmiRange(bmi: number): BmiRange {
@@ -119,6 +119,7 @@ export function ProfileCard({
             Platform.OS === "web" ? (
               <img
                 src={profileImage}
+                alt="Profile avatar"
                 style={{
                   width: "100%",
                   height: "100%",
@@ -130,6 +131,7 @@ export function ProfileCard({
               <Image
                 source={{ uri: profileImage }}
                 style={{ width: 56, height: 56, borderRadius: 28 }}
+                accessibilityLabel="Profile avatar"
               />
             )
           ) : (
@@ -185,8 +187,9 @@ export function ProfileCard({
                 onPress={() =>
                   Linking.openURL("https://www.healthhero.ie/bmi-calculator")
                 }
+                accessibilityLabel={`BMI category: ${bmiRange.label}. Tap to learn more.`}
                 style={{
-                  backgroundColor: bmiRange.color + "33",
+                  backgroundColor: bmiRange.color,
                   borderRadius: 999,
                   paddingHorizontal: 6,
                   paddingVertical: 2,
@@ -195,7 +198,7 @@ export function ProfileCard({
               >
                 <Text
                   style={{
-                    color: bmiRange.color,
+                    color: "#FFFFFF",
                     fontSize: 9,
                     fontWeight: "700",
                   }}

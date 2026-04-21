@@ -21,7 +21,10 @@ export function DayCard({ date, cycleDay }: DayCardProps) {
         borderColor: theme.backgroundSelected,
       }}
     >
-      <Text className="text-4xl font-bold" style={{ color: theme.primary }}>
+      <Text
+        className="text-4xl font-bold"
+        style={{ color: theme.primaryPressed }}
+      >
         {date}
       </Text>
       <Text className="mt-2 text-base" style={{ color: theme.text }}>

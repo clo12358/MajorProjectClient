@@ -13,7 +13,7 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarShowLabel: true,
 
-        tabBarActiveTintColor: theme.primary,
+        tabBarActiveTintColor: theme.text,
         tabBarInactiveTintColor: theme.textSecondary,
 
         tabBarStyle: {

@@ -31,10 +31,7 @@ export function InfoCard({ title, subtitle, symptoms }: InfoCardProps) {
           </Text>
 
           {subtitle ? (
-            <Text
-              className="mt-1 text-base"
-              style={{ color: theme.textSecondary }}
-            >
+            <Text className="mt-1 text-base" style={{ color: theme.text }}>
               {subtitle}
             </Text>
           ) : null}

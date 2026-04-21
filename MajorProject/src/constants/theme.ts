@@ -10,13 +10,13 @@ export const Colors = {
     backgroundSelected: "#F0F4F4",
 
     primary: "#C3DCDB",
-    primaryPressed: "#7AA3A2",
+    primaryPressed: "#5E8A89",
     secondary: "#D1E2F5",
     secondaryPressed: "#7AAAC8",
     accent: "#FDDFD8",
 
     danger: "#FBE3E6",
-    dangerText: "#E11D48",
+    dangerText: "#9B0F2E",
 
     textSecondary: "#60646C",
   },
@@ -46,13 +46,9 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: "system-ui",
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
     serif: "ui-serif",
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
     rounded: "ui-rounded",
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: "ui-monospace",
   },
   default: {

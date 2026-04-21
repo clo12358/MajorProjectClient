@@ -38,6 +38,7 @@ export function CalendarCard({
   return (
     <View
       className="rounded-3xl border p-4"
+      aria-label="Calendar"
       style={{
         backgroundColor: theme.backgroundElement,
         borderColor: theme.backgroundSelected,
