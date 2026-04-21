@@ -77,14 +77,14 @@ export default function Login() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
-      <View className="px-7 pt-12">
+      <View className="px-7 pt-6">
         {/* Logo */}
-        <View className="items-center mt-1 mb-1">
+        <View className="items-center mt-0 mb-0">
           <Image
             source={require("../../assets/logo.png")}
             style={{
-              width: 400,
-              height: 400,
+              width: 220,
+              height: 220,
               resizeMode: "contain",
             }}
           />

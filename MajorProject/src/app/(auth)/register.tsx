@@ -21,7 +21,6 @@ export default function Register() {
   const [passwordError, setPasswordError] = useState("");
   const [generalError, setGeneralError] = useState("");
 
-  // The useMemo watches the fields and only returns true when all fields have some text in them.
   const canSubmit = useMemo(() => {
     return (
       name.trim().length > 0 &&
@@ -39,10 +38,8 @@ export default function Register() {
 
   async function handleRegister() {
     if (!canSubmit) return;
-    // setLoading(true) prevents user from pressing the button more than once. And shows the "Creating Account..." text on the button.
     setLoading(true);
     clearErrors();
-    //This gets the URL from the lib/axios.ts file and adds the /register endpoint to it.
     try {
       const response = await api.post("/register", {
         name,
@@ -50,21 +47,17 @@ export default function Register() {
         password,
       });
 
-      //Token gets stored in AsyncStorage so it can be used later.
       const token = response.data.token;
       await AsyncStorage.setItem("auth_token", token);
 
-      //Then navigate to the home screen.
       router.replace("/(tabs)/home");
     } catch (error: any) {
       const errors = error.response?.data?.errors;
 
-      //This checks if there are any errors and maps them to their specific fields.
       if (errors) {
         if (errors.name) setNameError(errors.name[0]);
         if (errors.email) setEmailError(errors.email[0]);
         if (errors.password) setPasswordError(errors.password[0]);
-        // If there are errors not tied to a specific field, show a general error.
         if (!errors.name && !errors.email && !errors.password) {
           setGeneralError("Something went wrong. Please try again.");
         }
@@ -78,14 +71,14 @@ export default function Register() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
-      <View className="px-7 pt-7">
+      <View className="px-7 pt-4">
         {/* Logo */}
-        <View className="items-center mt-1 mb-1">
+        <View className="items-center mt-0 mb-0">
           <Image
             source={require("../../assets/logo.png")}
             style={{
-              width: 400,
-              height: 400,
+              width: 220,
+              height: 220,
               resizeMode: "contain",
             }}
           />
