@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, Modal, Pressable, ScrollView, Text, View } from "react-native";
@@ -10,7 +11,10 @@ import { LargeButton } from "../../components/custom/large-button";
 import { PillButton } from "../../components/custom/pill-button";
 import { QuoteCard } from "../../components/custom/quote-card";
 import { SectionCard } from "../../components/custom/section-card";
-import { SymptomCategorySection } from "../../components/custom/symptom-category";
+import {
+  CATEGORY_ICONS,
+  SymptomCategorySection,
+} from "../../components/custom/symptom-category";
 import { Toast } from "../../components/custom/toast";
 import { Colors } from "../../constants/theme";
 
@@ -20,6 +24,11 @@ const flowMap: Record<string, { flow: string; has_clots: boolean }> = {
   Heavy: { flow: "heavy", has_clots: false },
   "Blood Clots": { flow: "heavy", has_clots: true },
 };
+
+function getPeriodLabel(flow: string, has_clots: boolean): string {
+  if (has_clots) return "Blood Clots";
+  return flow.charAt(0).toUpperCase() + flow.slice(1);
+}
 
 interface Cycle {
   id: number;
@@ -55,6 +64,19 @@ interface DailyLogResponse {
   }[];
 }
 
+interface PeriodDay {
+  id: number;
+  period_id: number;
+  date: string;
+  flow: string;
+  has_clots: boolean | number;
+}
+
+type SavedSymptom = {
+  name: string;
+  category: string;
+};
+
 const apiFeelingToLabel: Record<string, string> = {
   great: "Great",
   good: "Good",
@@ -81,6 +103,9 @@ export default function Home() {
 
   const [selectedDate, setSelectedDate] = useState(todayString);
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
+  const [loggedPeriodForDate, setLoggedPeriodForDate] = useState<string | null>(
+    null,
+  );
   const [showSymptomsModal, setShowSymptomsModal] = useState(false);
   const [selectedSymptomIds, setSelectedSymptomIds] = useState<number[]>([]);
   const [loggingPeriod, setLoggingPeriod] = useState(false);
@@ -88,7 +113,9 @@ export default function Home() {
   const [endingPeriod, setEndingPeriod] = useState(false);
   const [openingJournal, setOpeningJournal] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [savedSymptomNames, setSavedSymptomNames] = useState<string[]>([]);
+  const [savedSymptomNames, setSavedSymptomNames] = useState<SavedSymptom[]>(
+    [],
+  );
   const [todayLogId, setTodayLogId] = useState<number | null>(null);
   const [journalPreview, setJournalPreview] = useState("");
   const [journalFeeling, setJournalFeeling] = useState<string | null>(null);
@@ -97,6 +124,9 @@ export default function Home() {
     start_date: string;
     end_date: string | null;
   } | null>(null);
+  const [periodLogsByDate, setPeriodLogsByDate] = useState<
+    Record<string, PeriodDay>
+  >({});
   const [cycles, setCycles] = useState<Cycle[]>([]);
   const [cycleDay, setCycleDay] = useState<number | null>(null);
   const [quote, setQuote] = useState("The best is yet to come.");
@@ -131,6 +161,7 @@ export default function Home() {
     fetchAllCycles();
     fetchCategories();
     fetchQuote();
+    fetchPeriodLogs();
   }, []);
 
   // Recalculate cycle day whenever selectedDate or cycles change
@@ -155,10 +186,20 @@ export default function Home() {
     setCycleDay(day > 0 ? day : null);
   }, [selectedDate, cycles]);
 
+  // Update logged period pill when date or period logs change
+  useEffect(() => {
+    const log = periodLogsByDate[selectedDate];
+    if (log) {
+      setLoggedPeriodForDate(getPeriodLabel(log.flow, Boolean(log.has_clots)));
+    } else {
+      setLoggedPeriodForDate(null);
+    }
+    setSelectedPeriod(null);
+  }, [selectedDate, periodLogsByDate]);
+
   // Refetch journal/symptoms whenever selectedDate changes
   useEffect(() => {
     fetchJournalPreviewForDate(selectedDate);
-    setSelectedPeriod(null);
   }, [selectedDate]);
 
   useEffect(() => {
@@ -201,6 +242,29 @@ export default function Home() {
       setCycles(fetchedCycles);
     } catch (error) {
       console.error("Failed to fetch cycles:", error);
+    }
+  }
+
+  async function fetchPeriodLogs() {
+    try {
+      const periodsResponse = await api.get("/periods");
+      const periods = periodsResponse.data ?? [];
+      if (periods.length === 0) return;
+
+      const singlePeriodResponses = await Promise.all(
+        periods.map((p: any) => api.get(`/periods/${p.id}`)),
+      );
+
+      const byDate: Record<string, PeriodDay> = {};
+      singlePeriodResponses
+        .flatMap((r) => r.data?.days ?? [])
+        .forEach((day: PeriodDay) => {
+          byDate[day.date] = day;
+        });
+
+      setPeriodLogsByDate(byDate);
+    } catch (error) {
+      console.error("Failed to fetch period logs:", error);
     }
   }
 
@@ -265,11 +329,19 @@ export default function Home() {
           : null,
       );
 
-      const names: string[] =
-        log.daily_symptoms
-          ?.map((ds: any) => ds.symptom?.name)
-          .filter(Boolean) ?? [];
-      setSavedSymptomNames(names);
+      const enriched: SavedSymptom[] = log.daily_symptoms
+        ?.map((ds: any) => {
+          const symptom = allSymptoms.find((s) => s.id === ds.symptom_id);
+          const category = categories.find((c) =>
+            c.symptoms.some((s) => s.id === ds.symptom_id),
+          );
+          return symptom
+            ? { name: symptom.name, category: category?.name ?? "Symptoms" }
+            : null;
+        })
+        .filter(Boolean) as SavedSymptom[];
+
+      setSavedSymptomNames(enriched ?? []);
       setSelectedSymptomIds(
         log.daily_symptoms?.map((ds: any) => ds.symptom_id).filter(Boolean) ??
           [],
@@ -314,10 +386,20 @@ export default function Home() {
       await api.post(`/daily-logs/${todayLogId}/symptoms`, {
         items: selectedSymptomIds.map((id) => ({ symptom_id: id })),
       });
-      const names = selectedSymptomIds
-        .map((id) => allSymptoms.find((s) => s.id === id)?.name)
-        .filter((name): name is string => Boolean(name));
-      setSavedSymptomNames(names);
+
+      const enriched: SavedSymptom[] = selectedSymptomIds
+        .map((id) => {
+          const symptom = allSymptoms.find((s) => s.id === id);
+          const category = categories.find((c) =>
+            c.symptoms.some((s) => s.id === id),
+          );
+          return symptom
+            ? { name: symptom.name, category: category?.name ?? "Symptoms" }
+            : null;
+        })
+        .filter(Boolean) as SavedSymptom[];
+
+      setSavedSymptomNames(enriched);
       setShowSymptomsModal(false);
     } catch (error: any) {
       Alert.alert("Error", "Failed to save symptoms. Please try again.");
@@ -363,6 +445,8 @@ export default function Home() {
         flow,
         has_clots,
       });
+
+      await fetchPeriodLogs();
 
       Alert.alert(
         "Logged!",
@@ -494,14 +578,24 @@ export default function Home() {
           >
             {savedSymptomNames.length > 0 ? (
               <View className="flex-row flex-wrap" style={{ gap: 8 }}>
-                {savedSymptomNames.map((name) => (
+                {savedSymptomNames.map(({ name, category }) => (
                   <View
-                    key={name}
+                    key={`${category}-${name}`}
                     className="rounded-full px-3 py-1"
-                    style={{ backgroundColor: theme.accent }}
+                    style={{
+                      backgroundColor: theme.accent,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 5,
+                    }}
                   >
+                    <Ionicons
+                      name={CATEGORY_ICONS[category] ?? "ellipse-outline"}
+                      size={11}
+                      color={theme.primaryPressed}
+                    />
                     <Text
-                      className="text-sm font-medium"
+                      className="text-xs font-medium"
                       style={{ color: theme.text }}
                     >
                       {name}
@@ -560,6 +654,7 @@ export default function Home() {
                   key={option}
                   label={option}
                   selected={selectedPeriod === option}
+                  logged={loggedPeriodForDate === option}
                   onPress={() => setSelectedPeriod(option)}
                 />
               ))}
