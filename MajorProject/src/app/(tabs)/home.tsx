@@ -1,10 +1,10 @@
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, Modal, Pressable, ScrollView, Text, View } from "react-native";
 
 import { useTheme } from "@/context/ThemeContext";
 import api from "@/lib/axios";
-import { DateChips } from "../../components/custom/date-chips";
+import { DateChips, DateChipsRef } from "../../components/custom/date-chips";
 import { DayCard } from "../../components/custom/day-card";
 import { LargeButton } from "../../components/custom/large-button";
 import { PillButton } from "../../components/custom/pill-button";
@@ -74,6 +74,7 @@ export default function Home() {
   const { isDark } = useTheme();
   const theme = Colors[isDark ? "dark" : "light"];
   const params = useLocalSearchParams<{ journalSaved?: string }>();
+  const dateChipsRef = useRef<DateChipsRef>(null);
 
   const today = new Date();
   const todayString = formatDate(today);
@@ -96,6 +97,7 @@ export default function Home() {
     start_date: string;
     end_date: string | null;
   } | null>(null);
+  const [cycles, setCycles] = useState<Cycle[]>([]);
   const [cycleDay, setCycleDay] = useState<number | null>(null);
   const [quote, setQuote] = useState("The best is yet to come.");
   const [toastVisible, setToastVisible] = useState(false);
@@ -123,24 +125,48 @@ export default function Home() {
   const feelingSymptoms = moodCategory?.symptoms.slice(0, 8) ?? [];
   const allSymptoms = categories.flatMap((c) => c.symptoms);
 
+  // One-time fetches on mount
   useEffect(() => {
-    if (params.journalSaved === "1") {
-      setToastVisible(true);
-      router.setParams({ journalSaved: undefined });
-    }
-  }, [params.journalSaved]);
+    fetchActivePeriod();
+    fetchAllCycles();
+    fetchCategories();
+    fetchQuote();
+  }, []);
 
+  // Recalculate cycle day whenever selectedDate or cycles change
+  useEffect(() => {
+    if (cycles.length === 0) return;
+
+    const activeCycle = cycles.find((c) => {
+      const afterStart = selectedDate >= c.start_date;
+      const beforeEnd = c.end_date === null || selectedDate <= c.end_date;
+      return afterStart && beforeEnd;
+    });
+
+    if (!activeCycle) {
+      setCycleDay(null);
+      return;
+    }
+
+    const start = new Date(`${activeCycle.start_date}T00:00:00`);
+    const end = new Date(`${selectedDate}T00:00:00`);
+    const day =
+      Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    setCycleDay(day > 0 ? day : null);
+  }, [selectedDate, cycles]);
+
+  // Refetch journal/symptoms whenever selectedDate changes
   useEffect(() => {
     fetchJournalPreviewForDate(selectedDate);
     setSelectedPeriod(null);
   }, [selectedDate]);
 
   useEffect(() => {
-    fetchActivePeriod();
-    fetchCurrentCycle();
-    fetchCategories();
-    fetchQuote();
-  }, []);
+    if (params.journalSaved === "1") {
+      setToastVisible(true);
+      router.setParams({ journalSaved: undefined });
+    }
+  }, [params.journalSaved]);
 
   useFocusEffect(
     useCallback(() => {
@@ -168,21 +194,13 @@ export default function Home() {
     };
   }
 
-  async function fetchCurrentCycle() {
+  async function fetchAllCycles() {
     try {
       const response = await api.get("/cycles");
-      const cycles: Cycle[] = response.data ?? [];
-      const activeCycle = cycles.find((cycle) => cycle.end_date === null);
-      if (!activeCycle) return setCycleDay(null);
-      const start = new Date(`${activeCycle.start_date}T00:00:00`);
-      const end = new Date(`${todayString}T00:00:00`);
-      const day =
-        Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) +
-        1;
-      setCycleDay(day > 0 ? day : null);
+      const fetchedCycles: Cycle[] = response.data ?? [];
+      setCycles(fetchedCycles);
     } catch (error) {
-      console.error("Failed to fetch current cycle:", error);
-      setCycleDay(null);
+      console.error("Failed to fetch cycles:", error);
     }
   }
 
@@ -409,6 +427,7 @@ export default function Home() {
         bounces
       >
         <DateChips
+          ref={dateChipsRef}
           days={days}
           selectedDate={selectedDate}
           onSelectDate={setSelectedDate}
@@ -416,7 +435,10 @@ export default function Home() {
 
         {!isViewingToday && (
           <Pressable
-            onPress={() => setSelectedDate(todayString)}
+            onPress={() => {
+              setSelectedDate(todayString);
+              dateChipsRef.current?.scrollToToday();
+            }}
             style={{
               flexDirection: "row",
               alignItems: "center",
