@@ -33,6 +33,37 @@ function formatDate(date: Date): string {
 
 const todayString = formatDate(new Date());
 
+function getWeekLabel(week: DayItem[]): string {
+  const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+  const firstMonth = week[0].fullDate.getMonth();
+  const lastMonth = week[week.length - 1].fullDate.getMonth();
+  const year = week[0].fullDate.getFullYear();
+
+  if (firstMonth === lastMonth) {
+    return `${months[firstMonth]} ${year}`;
+  }
+
+  const lastYear = week[week.length - 1].fullDate.getFullYear();
+  if (year !== lastYear) {
+    return `${months[firstMonth]} ${year} / ${months[lastMonth]} ${lastYear}`;
+  }
+
+  return `${months[firstMonth]} / ${months[lastMonth]} ${year}`;
+}
+
 export function DateChips({
   days,
   selectedDate,
@@ -72,8 +103,36 @@ export function DateChips({
 
   const DAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"];
 
+  const weekLabel = weeks[currentWeek] ? getWeekLabel(weeks[currentWeek]) : "";
+  const labelParts = weekLabel.split(" ");
+  const monthPart = labelParts[0];
+  const restPart = labelParts.slice(1).join(" ");
+
   return (
     <View className="mb-5">
+      {/* Month label */}
+      <View style={{ alignItems: "center", marginBottom: 12 }}>
+        <Text
+          style={{
+            fontSize: 15,
+            fontWeight: "700",
+            color: theme.text,
+            letterSpacing: 0.3,
+          }}
+        >
+          {monthPart}{" "}
+          <Text
+            style={{
+              fontSize: 15,
+              fontWeight: "400",
+              color: theme.textSecondary,
+            }}
+          >
+            {restPart}
+          </Text>
+        </Text>
+      </View>
+
       <ScrollView
         ref={scrollRef}
         horizontal
