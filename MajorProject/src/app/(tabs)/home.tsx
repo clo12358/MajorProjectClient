@@ -568,68 +568,6 @@ export default function Home() {
           <QuoteCard quote={quote} />
         </View>
 
-        <View className="mt-5">
-          <SectionCard
-            title={
-              savedSymptomNames.length > 0
-                ? `Symptoms logged on ${formattedSelectedDate}`
-                : "How are you feeling?"
-            }
-          >
-            {savedSymptomNames.length > 0 ? (
-              <View className="flex-row flex-wrap" style={{ gap: 8 }}>
-                {savedSymptomNames.map(({ name, category }) => (
-                  <View
-                    key={`${category}-${name}`}
-                    className="rounded-full px-3 py-1"
-                    style={{
-                      backgroundColor: theme.accent,
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 5,
-                    }}
-                  >
-                    <Ionicons
-                      name={CATEGORY_ICONS[category] ?? "ellipse-outline"}
-                      size={11}
-                      color={theme.primaryPressed}
-                    />
-                    <Text
-                      className="text-xs font-medium"
-                      style={{ color: theme.text }}
-                    >
-                      {name}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            ) : (
-              <View className="flex-row flex-wrap gap-2">
-                {feelingSymptoms.map((symptom) => (
-                  <PillButton
-                    key={symptom.id}
-                    label={symptom.name}
-                    selected={selectedSymptomIds.includes(symptom.id)}
-                    onPress={() => toggleSymptom(symptom.id)}
-                  />
-                ))}
-              </View>
-            )}
-
-            <View className="items-end mt-4">
-              <Pressable
-                className="rounded-full px-4 py-2"
-                style={{ backgroundColor: theme.primary }}
-                onPress={handleOpenSymptomsModal}
-              >
-                <Text className="text-xs" style={{ color: theme.text }}>
-                  Log more...
-                </Text>
-              </Pressable>
-            </View>
-          </SectionCard>
-        </View>
-
         <View className="mt-4">
           <SectionCard title="Period Tracking">
             {activePeriod ? (
@@ -677,6 +615,70 @@ export default function Home() {
                 />
               </View>
             )}
+          </SectionCard>
+        </View>
+
+        <View className="mt-5">
+          <SectionCard
+            title={
+              savedSymptomNames.length > 0
+                ? `Symptoms logged on ${formattedSelectedDate}`
+                : "How are you feeling?"
+            }
+          >
+            {savedSymptomNames.length > 0 ? (
+              <View className="flex-row flex-wrap" style={{ gap: 8 }}>
+                {savedSymptomNames.map(({ name, category }) => (
+                  <View
+                    key={`${category}-${name}`}
+                    className="rounded-full px-4 py-2"
+                    style={{
+                      backgroundColor: theme.accent,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 5,
+                    }}
+                  >
+                    <Ionicons
+                      name={CATEGORY_ICONS[category] ?? "ellipse-outline"}
+                      size={11}
+                      color={theme.primaryPressed}
+                    />
+                    <Text
+                      className="text-xs font-medium"
+                      style={{ color: theme.text }}
+                    >
+                      {name}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <View className="flex-row flex-wrap gap-2">
+                {feelingSymptoms.map((symptom) => (
+                  <PillButton
+                    key={symptom.id}
+                    label={symptom.name}
+                    selected={selectedSymptomIds.includes(symptom.id)}
+                    onPress={() => toggleSymptom(symptom.id)}
+                  />
+                ))}
+              </View>
+            )}
+
+            <View className="items-end mt-4">
+              <Pressable onPress={handleOpenSymptomsModal}>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    color: theme.primaryPressed,
+                    fontWeight: "600",
+                  }}
+                >
+                  + Log more
+                </Text>
+              </Pressable>
+            </View>
           </SectionCard>
         </View>
 
