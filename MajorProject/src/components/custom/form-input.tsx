@@ -23,8 +23,8 @@ export function FormInput({
   keyboardType = "default",
   autoCapitalize = "none",
 }: FormInputProps) {
-  const { isDark } = useTheme();
-  const theme = Colors[isDark ? "dark" : "light"];
+  const { themeName, setTheme } = useTheme();
+  const theme = Colors[themeName];
 
   return (
     <View className="gap-2">

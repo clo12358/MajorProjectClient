@@ -7,7 +7,7 @@ import {
   Pressable,
   ScrollView,
   Text,
-  View
+  View,
 } from "react-native";
 import { BarChart, LineChart } from "react-native-gifted-charts";
 
@@ -90,10 +90,8 @@ const FEELING_SCORE: Record<string, number> = {
 };
 
 export default function Insights() {
-  // const colorScheme = useColorScheme();
-  // const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
-  const { isDark } = useTheme();
-  const theme = Colors[isDark ? "dark" : "light"];
+  const { themeName, setTheme } = useTheme();
+  const theme = Colors[themeName];
 
   const [quote, setQuote] = useState("Patterns take time — keep logging.");
 

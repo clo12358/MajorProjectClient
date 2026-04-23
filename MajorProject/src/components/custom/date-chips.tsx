@@ -76,8 +76,8 @@ function getWeekLabel(week: DayItem[]): string {
 
 export const DateChips = forwardRef<DateChipsRef, DateChipsProps>(
   function DateChips({ days, selectedDate, onSelectDate }, ref) {
-    const { isDark } = useTheme();
-    const theme = Colors[isDark ? "dark" : "light"];
+    const { themeName, setTheme } = useTheme();
+    const theme = Colors[themeName];
     const scrollRef = useRef<ScrollView>(null);
 
     const weeks = Array.from({ length: Math.ceil(days.length / 7) }, (_, i) =>

@@ -4,8 +4,8 @@ import { Tabs } from "expo-router";
 import { Colors } from "../../constants/theme";
 
 export default function TabsLayout() {
-  const { isDark } = useTheme();
-  const theme = Colors[isDark ? "dark" : "light"];
+  const { themeName, setTheme } = useTheme();
+  const theme = Colors[themeName];
 
   return (
     <Tabs

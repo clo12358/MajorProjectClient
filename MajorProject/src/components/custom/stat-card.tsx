@@ -10,8 +10,8 @@ type StatCardProps = {
 };
 
 export function StatCard({ title, value, label }: StatCardProps) {
-  const { isDark } = useTheme();
-  const theme = Colors[isDark ? "dark" : "light"];
+  const { themeName, setTheme } = useTheme();
+  const theme = Colors[themeName];
 
   return (
     <View

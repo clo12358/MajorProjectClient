@@ -61,8 +61,8 @@ export function ProfileCard({
   buttonTitle = "Edit Profile",
   onPressButton,
 }: ProfileCardProps) {
-  const { isDark } = useTheme();
-  const theme = Colors[isDark ? "dark" : "light"];
+  const { themeName, setTheme } = useTheme();
+  const theme = Colors[themeName];
 
   const age = dob ? calculateAge(dob) : null;
   const [bmi, setBmi] = useState<string | null>(null);

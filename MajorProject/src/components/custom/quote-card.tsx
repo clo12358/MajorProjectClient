@@ -1,4 +1,5 @@
-import { ImageBackground, Text, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Text } from "react-native";
 
 import { useTheme } from "@/context/ThemeContext";
 import { Colors } from "../../constants/theme";
@@ -8,29 +9,31 @@ type QuoteCardProps = {
 };
 
 export function QuoteCard({ quote }: QuoteCardProps) {
-  const { isDark } = useTheme();
-  const theme = Colors[isDark ? "dark" : "light"];
+  const { themeName } = useTheme();
+  const theme = Colors[themeName];
 
   return (
-    <ImageBackground
-      source={require("../../assets/images/Background_Image3.png")}
-      className="rounded-3xl overflow-hidden"
-      imageStyle={{ borderRadius: 24 }}
+    <LinearGradient
+      colors={[theme.primary, theme.secondary]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={{
+        borderRadius: 24,
+        paddingHorizontal: 20,
+        paddingVertical: 24,
+      }}
     >
-      <View
+      <Text
         style={{
-          backgroundColor: isDark ? "rgba(0,0,0,0.35)" : "transparent",
-          paddingHorizontal: 20,
-          paddingVertical: 24,
+          fontSize: 14,
+          textAlign: "center",
+          fontStyle: "italic",
+          color: theme.text,
+          lineHeight: 22,
         }}
       >
-        <Text
-          className="text-base text-center italic"
-          style={{ color: theme.text }}
-        >
-          {quote}
-        </Text>
-      </View>
-    </ImageBackground>
+        {quote}
+      </Text>
+    </LinearGradient>
   );
 }

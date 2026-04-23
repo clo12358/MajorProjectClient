@@ -10,8 +10,8 @@ type DayCardProps = {
 };
 
 export function DayCard({ date, cycleDay }: DayCardProps) {
-  const { isDark } = useTheme();
-  const theme = Colors[isDark ? "dark" : "light"];
+  const { themeName, setTheme } = useTheme();
+  const theme = Colors[themeName];
 
   return (
     <Card

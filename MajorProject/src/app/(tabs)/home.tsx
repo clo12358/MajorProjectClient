@@ -93,8 +93,8 @@ function formatDate(date: Date): string {
 }
 
 export default function Home() {
-  const { isDark } = useTheme();
-  const theme = Colors[isDark ? "dark" : "light"];
+  const { themeName, setTheme } = useTheme();
+  const theme = Colors[themeName];
   const params = useLocalSearchParams<{ journalSaved?: string }>();
   const dateChipsRef = useRef<DateChipsRef>(null);
 

@@ -68,8 +68,8 @@ const todayString = formatDateString(new Date());
 const SEX_CATEGORY = "Sex & Sex Drive";
 
 export default function CalendarPage() {
-  const { isDark } = useTheme();
-  const theme = Colors[isDark ? "dark" : "light"];
+  const { themeName, setTheme } = useTheme();
+  const theme = Colors[themeName];
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [periodDates, setPeriodDates] = useState<string[]>([]);

@@ -21,8 +21,8 @@ export function CalendarCard({
   periodDates = [],
   sexDates = [],
 }: CalendarCardProps) {
-  const { isDark } = useTheme();
-  const theme = Colors[isDark ? "dark" : "light"];
+  const { themeName, setTheme } = useTheme();
+  const theme = Colors[themeName];
   const [calendarKey, setCalendarKey] = useState(0);
   const [visibleMonth, setVisibleMonth] = useState(todayString.slice(0, 7));
 

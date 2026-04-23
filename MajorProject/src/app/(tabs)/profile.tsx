@@ -1,7 +1,15 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, ScrollView, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Modal,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 
 import { useTheme } from "@/context/ThemeContext";
 import api from "@/lib/axios";
@@ -11,7 +19,7 @@ import { ProfileCard } from "../../components/custom/profile-card";
 import { QuoteCard } from "../../components/custom/quote-card";
 import { SettingsRow } from "../../components/custom/settings-row";
 import { Toast } from "../../components/custom/toast";
-import { Colors } from "../../constants/theme";
+import { Colors, ThemeName } from "../../constants/theme";
 
 interface User {
   id: number;
@@ -23,9 +31,42 @@ interface User {
   profile_image: string | null;
 }
 
+const THEMES: { name: ThemeName; label: string; description: string }[] = [
+  {
+    name: "light",
+    label: "Cloud",
+    description: "Clean light theme",
+  },
+  {
+    name: "dark",
+    label: "Midnight",
+    description: "Deep teal darks",
+  },
+  {
+    name: "rose",
+    label: "Rose",
+    description: "Soft warm pinks",
+  },
+  {
+    name: "sage",
+    label: "Sage",
+    description: "Calm natural greens",
+  },
+  {
+    name: "lavender",
+    label: "Lavender",
+    description: "Dreamy soft purples",
+  },
+  {
+    name: "sunset",
+    label: "Sunset",
+    description: "Warm peachy tones",
+  },
+];
+
 export default function Profile() {
-  const { isDark, toggleTheme } = useTheme();
-  const theme = Colors[isDark ? "dark" : "light"];
+  const { themeName, setTheme } = useTheme();
+  const theme = Colors[themeName];
 
   const [notifications, setNotifications] = useState(true);
   const [user, setUser] = useState<User | null>(null);
@@ -35,6 +76,7 @@ export default function Profile() {
   const [quote, setQuote] = useState(
     "Enjoy the process. The results will come.",
   );
+  const [showThemeModal, setShowThemeModal] = useState(false);
 
   const { updated } = useLocalSearchParams<{ updated?: string }>();
   const [showToast, setShowToast] = useState(false);
@@ -144,11 +186,11 @@ export default function Profile() {
             />
 
             <SettingsRow
-              title="Appearance"
-              icon="sunny-outline"
-              type="switch"
-              value={isDark}
-              onValueChange={toggleTheme}
+              title="Theme"
+              subtitle={THEMES.find((t) => t.name === themeName)?.label ?? ""}
+              icon="color-palette-outline"
+              type="link"
+              onPress={() => setShowThemeModal(true)}
             />
 
             <SettingsRow
@@ -181,6 +223,161 @@ export default function Profile() {
           <View className="h-10" />
         </View>
       </ScrollView>
+
+      {/* Theme Picker Modal */}
+      <Modal
+        visible={showThemeModal}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowThemeModal(false)}
+      >
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "flex-end",
+            backgroundColor: "rgba(0,0,0,0.25)",
+          }}
+        >
+          <Pressable
+            style={{ flex: 1 }}
+            onPress={() => setShowThemeModal(false)}
+          />
+
+          <View
+            style={{
+              backgroundColor: theme.backgroundElement,
+              borderTopLeftRadius: 28,
+              borderTopRightRadius: 28,
+              paddingHorizontal: 24,
+              paddingTop: 16,
+              paddingBottom: 40,
+              maxHeight: "80%",
+            }}
+          >
+            {/* Handle bar */}
+            <View className="items-center mb-6">
+              <View
+                style={{
+                  width: 48,
+                  height: 5,
+                  borderRadius: 999,
+                  backgroundColor: theme.backgroundSelected,
+                }}
+              />
+            </View>
+
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: "700",
+                color: theme.text,
+                marginBottom: 20,
+              }}
+            >
+              Choose a Theme
+            </Text>
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ gap: 12, paddingBottom: 8 }}
+            >
+              {THEMES.map((t) => {
+                const preview = Colors[t.name];
+                const isSelected = themeName === t.name;
+
+                return (
+                  <Pressable
+                    key={t.name}
+                    onPress={() => {
+                      setTheme(t.name);
+                      setShowThemeModal(false);
+                    }}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: 16,
+                      borderRadius: 16,
+                      borderWidth: isSelected ? 2 : 1,
+                      borderColor: isSelected
+                        ? theme.primaryPressed
+                        : theme.backgroundSelected,
+                      backgroundColor: isSelected
+                        ? theme.backgroundSelected
+                        : theme.backgroundElement,
+                    }}
+                  >
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 14,
+                      }}
+                    >
+                      {/* Colour preview swatches */}
+                      <View style={{ flexDirection: "row", gap: 4 }}>
+                        {[
+                          preview.background,
+                          preview.primary,
+                          preview.secondary,
+                          preview.accent,
+                        ].map((colour, i) => (
+                          <View
+                            key={i}
+                            style={{
+                              width: 18,
+                              height: 18,
+                              borderRadius: 9,
+                              backgroundColor: colour,
+                              borderWidth: 1,
+                              borderColor: preview.backgroundSelected,
+                            }}
+                          />
+                        ))}
+                      </View>
+
+                      <View>
+                        <Text
+                          style={{
+                            fontSize: 14,
+                            fontWeight: "600",
+                            color: theme.text,
+                          }}
+                        >
+                          {t.label}
+                        </Text>
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            color: theme.textSecondary,
+                          }}
+                        >
+                          {t.description}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {isSelected && (
+                      <View
+                        style={{
+                          width: 20,
+                          height: 20,
+                          borderRadius: 10,
+                          backgroundColor: theme.primaryPressed,
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Text style={{ color: "#fff", fontSize: 12 }}>✓</Text>
+                      </View>
+                    )}
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
 
       <Toast
         message="Profile updated successfully"

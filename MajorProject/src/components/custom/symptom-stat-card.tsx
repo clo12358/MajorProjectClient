@@ -16,8 +16,8 @@ type SymptomsCardProps = {
 };
 
 export function SymptomsCard({ title, symptoms }: SymptomsCardProps) {
-  const { isDark } = useTheme();
-  const theme = Colors[isDark ? "dark" : "light"];
+  const { themeName, setTheme } = useTheme();
+  const theme = Colors[themeName];
 
   const RANK_COLORS = [theme.primary, theme.secondary, theme.accent];
 

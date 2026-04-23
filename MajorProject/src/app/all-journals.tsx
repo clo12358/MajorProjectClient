@@ -6,7 +6,7 @@ import {
   Pressable,
   ScrollView,
   Text,
-  View
+  View,
 } from "react-native";
 
 import { JournalCard, JournalEntry } from "@/components/custom/journal-card";
@@ -15,8 +15,8 @@ import api from "@/lib/axios";
 import { Colors } from "../constants/theme";
 
 export default function AllJournalsPage() {
-  const { isDark } = useTheme();
-  const theme = Colors[isDark ? "dark" : "light"];
+  const { themeName, setTheme } = useTheme();
+  const theme = Colors[themeName];
 
   const [journals, setJournals] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(true);

@@ -45,8 +45,8 @@ function formatDate(dateString?: string) {
 }
 
 export function JournalCard({ journal }: JournalCardProps) {
-  const { isDark } = useTheme();
-  const theme = Colors[isDark ? "dark" : "light"];
+  const { themeName, setTheme } = useTheme();
+  const theme = Colors[themeName];
 
   const mood = journal.feeling ? MOOD_CONFIG[journal.feeling] : null;
 

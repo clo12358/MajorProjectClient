@@ -1,19 +1,14 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
-import {
-  Pressable,
-  ScrollView,
-  Text,
-  View
-} from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 
 import { useTheme } from "@/context/ThemeContext";
 import { PrivacySection } from "../components/custom/privacy-data";
 import { Colors } from "../constants/theme";
 
 export default function PrivacyData() {
-  const { isDark } = useTheme();
-  const theme = Colors[isDark ? "dark" : "light"];
+  const { themeName, setTheme } = useTheme();
+  const theme = Colors[themeName];
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>

@@ -21,8 +21,8 @@ import { ProfileImageCard } from "../components/custom/profile-image-card";
 import { Colors } from "../constants/theme";
 
 export default function EditProfile() {
-  const { isDark } = useTheme();
-  const theme = Colors[isDark ? "dark" : "light"];
+  const { themeName, setTheme } = useTheme();
+  const theme = Colors[themeName];
 
   const [userId, setUserId] = useState<number | null>(null);
   const [profileImage, setProfileImage] = useState<string | null>(null);
