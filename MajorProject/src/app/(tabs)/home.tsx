@@ -95,7 +95,7 @@ function formatDate(date: Date): string {
 export default function Home() {
   const { themeName, setTheme } = useTheme();
   const theme = Colors[themeName];
-  const params = useLocalSearchParams<{ journalSaved?: string }>();
+  const params = useLocalSearchParams<{ journalSaved?: string; date?: string }>();
   const dateChipsRef = useRef<DateChipsRef>(null);
 
   const today = new Date();
@@ -208,6 +208,16 @@ export default function Home() {
       router.setParams({ journalSaved: undefined });
     }
   }, [params.journalSaved]);
+
+  useEffect(() => {
+    if (params.date) {
+      setSelectedDate(params.date);
+      setTimeout(() => {
+        dateChipsRef.current?.scrollToDate(params.date!);
+      }, 50);
+      router.setParams({ date: undefined });
+    }
+  }, [params.date]);
 
   useFocusEffect(
     useCallback(() => {

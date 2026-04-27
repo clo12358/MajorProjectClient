@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { ScrollView, View } from "react-native";
 
@@ -324,6 +325,12 @@ export default function CalendarPage() {
               title={infoTitle}
               subtitle={getPeriodSubtitle()}
               symptoms={savedSymptoms}
+              onLogPress={() =>
+                router.navigate({
+                  pathname: "/(tabs)/home",
+                  params: { date: displayDate },
+                })
+              }
             />
           </View>
         </View>

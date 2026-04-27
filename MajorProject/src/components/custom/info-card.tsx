@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Text, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Pressable, Text, View } from "react-native";
 
 import { useTheme } from "@/context/ThemeContext";
 import { Colors } from "../../constants/theme";
@@ -14,22 +15,26 @@ type InfoCardProps = {
   title: string;
   subtitle?: string;
   symptoms?: SavedSymptom[];
+  onLogPress?: () => void;
 };
 
-export function InfoCard({ title, subtitle, symptoms }: InfoCardProps) {
+export function InfoCard({
+  title,
+  subtitle,
+  symptoms,
+  onLogPress,
+}: InfoCardProps) {
   const { themeName } = useTheme();
   const theme = Colors[themeName];
 
   return (
-    <View
-      className="rounded-3xl overflow-hidden"
-      style={{ backgroundColor: theme.primary }}
+    <LinearGradient
+      colors={[theme.primary, theme.secondary]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={{ borderRadius: 24, padding: 16 }}
     >
-      <View className="p-4">
-        <View
-          className="rounded-2xl px-4 py-4"
-          style={{ backgroundColor: theme.primary }}
-        >
+      <View className="px-4 py-4">
           <Text
             className="text-2xl font-semibold"
             style={{ color: theme.text }}
@@ -73,8 +78,31 @@ export function InfoCard({ title, subtitle, symptoms }: InfoCardProps) {
               ))}
             </View>
           ) : null}
-        </View>
+
+          {onLogPress ? (
+            <Pressable
+              onPress={onLogPress}
+              style={({ pressed }) => ({
+                marginTop: 12,
+                alignSelf: "flex-start",
+                backgroundColor: theme.primaryPressed,
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                borderRadius: 999,
+              })}
+            >
+              <Text
+                style={{
+                  color: theme.background,
+                  fontWeight: "700",
+                  fontSize: 13,
+                }}
+              >
+                Log for this date
+              </Text>
+            </Pressable>
+          ) : null}
       </View>
-    </View>
+    </LinearGradient>
   );
 }

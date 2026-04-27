@@ -32,6 +32,7 @@ type DateChipsProps = {
 
 export type DateChipsRef = {
   scrollToToday: () => void;
+  scrollToDate: (dateString: string) => void;
 };
 
 function formatDate(date: Date): string {
@@ -110,6 +111,15 @@ export const DateChips = forwardRef<DateChipsRef, DateChipsProps>(
           animated: true,
         });
         setCurrentWeek(index);
+      },
+      scrollToDate(dateString: string) {
+        const index = weeks.findIndex((week) =>
+          week.some((item) => formatDate(item.fullDate) === dateString),
+        );
+        if (index !== -1) {
+          scrollRef.current?.scrollTo({ x: index * SCREEN_WIDTH, animated: false });
+          setCurrentWeek(index);
+        }
       },
     }));
 
