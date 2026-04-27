@@ -304,9 +304,7 @@ export default function Insights() {
             <View
               className="h-16 w-16 rounded-full items-center justify-center mb-5 self-center"
               style={{ backgroundColor: theme.primary + "33" }}
-            >
-              <Text style={{ fontSize: 30 }}>📊</Text>
-            </View>
+            ></View>
 
             <Text
               className="text-2xl font-bold text-center mb-3"
@@ -327,9 +325,9 @@ export default function Insights() {
               className="text-sm text-center leading-6 mb-7"
               style={{ color: theme.textSecondary }}
             >
-              After your first full cycle — usually around 28 days — you'll
-              start to see trends like average cycle length, period duration,
-              and your most common symptoms.
+              After your first full cycle, you'll start to see trends like
+              average cycle length, period duration, and your most common
+              symptoms.
             </Text>
 
             <Pressable

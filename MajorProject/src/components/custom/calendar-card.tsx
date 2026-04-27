@@ -90,7 +90,7 @@ export function CalendarCard({
                       letterSpacing: 0.2,
                     }}
                   >
-                    ↩ Back to Today
+                    Back to Today
                   </Text>
                 </Pressable>
               )}

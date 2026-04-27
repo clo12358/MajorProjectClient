@@ -135,9 +135,7 @@ export default function CalendarPage() {
       }
 
       const allMarkedDates = periods.flatMap((period) =>
-        period.end_date
-          ? getDatesInRange(period.start_date, period.end_date)
-          : [period.start_date],
+        getDatesInRange(period.start_date, period.end_date ?? todayString),
       );
       setPeriodDates([...new Set(allMarkedDates)].sort());
 
