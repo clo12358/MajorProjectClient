@@ -33,6 +33,18 @@ interface Cycle {
   end_date: string | null;
 }
 
+interface Symptom {
+  id: number;
+  name: string;
+  category_id: number;
+}
+
+interface Category {
+  id: number;
+  name: string;
+  symptoms: Symptom[];
+}
+
 interface DailySymptom {
   id: number;
   symptom?: {
@@ -49,6 +61,11 @@ interface DailyLog {
   date: string;
   daily_symptoms?: DailySymptom[];
 }
+
+type SavedSymptom = {
+  name: string;
+  category: string;
+};
 
 function formatDateString(date: Date): string {
   const year = date.getFullYear();
@@ -68,7 +85,7 @@ const todayString = formatDateString(new Date());
 const SEX_CATEGORY = "Sex & Sex Drive";
 
 export default function CalendarPage() {
-  const { themeName, setTheme } = useTheme();
+  const { themeName } = useTheme();
   const theme = Colors[themeName];
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -80,12 +97,14 @@ export default function CalendarPage() {
     Record<string, DailyLog>
   >({});
   const [cycles, setCycles] = useState<Cycle[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [hasAnyData, setHasAnyData] = useState<boolean | null>(null);
 
   const displayDate = selectedDate ?? todayString;
 
   useEffect(() => {
     fetchAllData();
+    fetchCategories();
   }, []);
 
   async function fetchAllData() {
@@ -97,6 +116,22 @@ export default function CalendarPage() {
       ]);
     } catch (error) {
       console.error("Failed to fetch data:", error);
+    }
+  }
+
+  async function fetchCategories() {
+    try {
+      const [catRes, symRes] = await Promise.all([
+        api.get("/categories"),
+        api.get("/symptoms"),
+      ]);
+      const cats: Category[] = catRes.data.map((cat: any) => ({
+        ...cat,
+        symptoms: symRes.data.filter((s: Symptom) => s.category_id === cat.id),
+      }));
+      setCategories(cats);
+    } catch (error) {
+      console.error("Failed to fetch categories:", error);
     }
   }
 
@@ -208,13 +243,24 @@ export default function CalendarPage() {
   const isPeriodDate = periodDates.includes(displayDate);
   const dailyLog = dailyLogsByDate[displayDate];
 
-  const symptomNames: string[] =
-    dailyLog?.daily_symptoms
-      ?.map((ds) => ds.symptom?.name)
-      .filter((name): name is string => Boolean(name)) ?? [];
+  const savedSymptoms: SavedSymptom[] = useMemo(() => {
+    if (!dailyLog?.daily_symptoms) return [];
+    return dailyLog.daily_symptoms
+      .map((ds) => {
+        const name = ds.symptom?.name;
+        if (!name) return null;
+        const category =
+          ds.symptom?.category?.name ??
+          categories.find((c) => c.symptoms.some((s) => s.name === name))
+            ?.name ??
+          "Symptoms";
+        return { name, category };
+      })
+      .filter(Boolean) as SavedSymptom[];
+  }, [dailyLog, categories]);
 
   const dateHasNoData =
-    !selectedDayLog && !isPeriodDate && symptomNames.length === 0;
+    !selectedDayLog && !isPeriodDate && savedSymptoms.length === 0;
 
   function getCycleTitle(): string {
     if (hasAnyData === false) return "Nothing logged yet";
@@ -263,11 +309,7 @@ export default function CalendarPage() {
             <Legend
               items={[
                 { label: "Today", color: theme.primary },
-                {
-                  label: "Period Day",
-                  color: theme.accent,
-                  icon: "water",
-                },
+                { label: "Period Day", color: theme.accent, icon: "water" },
                 {
                   label: "Sex & Sex Drive",
                   color: theme.secondary,
@@ -281,7 +323,7 @@ export default function CalendarPage() {
             <InfoCard
               title={infoTitle}
               subtitle={getPeriodSubtitle()}
-              symptoms={symptomNames}
+              symptoms={savedSymptoms}
             />
           </View>
         </View>

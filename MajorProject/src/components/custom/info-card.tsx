@@ -1,16 +1,23 @@
+import { Ionicons } from "@expo/vector-icons";
 import { Text, View } from "react-native";
 
 import { useTheme } from "@/context/ThemeContext";
 import { Colors } from "../../constants/theme";
+import { CATEGORY_ICONS } from "./symptom-category";
+
+type SavedSymptom = {
+  name: string;
+  category: string;
+};
 
 type InfoCardProps = {
   title: string;
   subtitle?: string;
-  symptoms?: string[];
+  symptoms?: SavedSymptom[];
 };
 
 export function InfoCard({ title, subtitle, symptoms }: InfoCardProps) {
-  const { themeName, setTheme } = useTheme();
+  const { themeName } = useTheme();
   const theme = Colors[themeName];
 
   return (
@@ -38,21 +45,29 @@ export function InfoCard({ title, subtitle, symptoms }: InfoCardProps) {
 
           {symptoms && symptoms.length > 0 ? (
             <View className="flex-row flex-wrap mt-3" style={{ gap: 8 }}>
-              {symptoms.map((symptom) => (
+              {symptoms.map(({ name, category }) => (
                 <View
-                  key={symptom}
-                  className="rounded-full px-3 py-1"
+                  key={`${category}-${name}`}
+                  className="rounded-full px-3 py-2"
                   style={{
                     backgroundColor: theme.background,
                     borderColor: theme.accent,
                     borderWidth: 1,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 5,
                   }}
                 >
+                  <Ionicons
+                    name={CATEGORY_ICONS[category] ?? "ellipse-outline"}
+                    size={11}
+                    color={theme.primaryPressed}
+                  />
                   <Text
                     className="text-sm font-medium"
                     style={{ color: theme.text }}
                   >
-                    {symptom}
+                    {name}
                   </Text>
                 </View>
               ))}
