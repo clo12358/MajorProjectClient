@@ -301,11 +301,6 @@ export default function Insights() {
             className="rounded-3xl p-7 w-full"
             style={{ backgroundColor: theme.backgroundElement }}
           >
-            <View
-              className="h-16 w-16 rounded-full items-center justify-center mb-5 self-center"
-              style={{ backgroundColor: theme.primary + "33" }}
-            ></View>
-
             <Text
               className="text-2xl font-bold text-center mb-3"
               style={{ color: theme.text }}
