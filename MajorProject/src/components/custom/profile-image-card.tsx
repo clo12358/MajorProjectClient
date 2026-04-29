@@ -6,6 +6,7 @@ import { FlatList, Image, Modal, Pressable, Text, View } from "react-native";
 import { useTheme } from "@/context/ThemeContext";
 import { Colors } from "../../constants/theme";
 
+//Defines the props
 type ProfileImageCardProps = {
   userId: number;
   profileImage: string | null;
@@ -55,6 +56,7 @@ const AVATAR_SEEDS = [
   "nova",
 ];
 
+//Creates an array of avatar image URLs by mapping over the AVATAR_SEEDS array and giving each seed to the Dicebear API
 const avatarOptions = AVATAR_SEEDS.map(
   (seed) => `https://api.dicebear.com/9.x/lorelei/png?seed=${seed}&size=200`,
 );
@@ -68,6 +70,7 @@ export function ProfileImageCard({
   const theme = Colors[themeName];
   const [modalVisible, setModalVisible] = useState(false);
 
+  //Saves the selected avatar URL to AsyncStorage
   async function handleSelect(url: string) {
     await AsyncStorage.setItem(`avatar_url_${userId}`, url);
     onSelect(url);

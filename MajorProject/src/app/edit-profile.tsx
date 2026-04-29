@@ -34,6 +34,7 @@ export default function EditProfile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  // Fetches the user's existing profile data, and prefills the form and loads the avatar if it exists in AsyncStorage
   useEffect(() => {
     async function init() {
       try {
@@ -41,6 +42,7 @@ export default function EditProfile() {
         const user = response.data;
         setUserId(user.id);
         setName(user.name ?? "");
+        //Convert height and weight to strings for the text inputs
         setHeight(user.height ? String(user.height) : "");
         setWeight(user.weight ? String(user.weight) : "");
         setDateOfBirth(user.dob ? new Date(user.dob) : null);
@@ -55,36 +57,42 @@ export default function EditProfile() {
     init();
   }, []);
 
+  //Formats a Date object into YYYY-MM-DD format for sending back to the API
   function formatDate(date: Date): string {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0"); // padStart ensures single digit days have a leading 0 e.g. "01"
     return `${year}-${month}-${day}`;
   }
 
   async function handleSave() {
     setSaving(true);
     try {
+      // Builds a FormData object to send the profile data as multipart/form-data
       const formData = new FormData();
       formData.append("_method", "PUT");
+      // Converts height and weight to strings for the text inputs
       if (name) formData.append("name", name);
       if (dateOfBirth) formData.append("dob", formatDate(dateOfBirth));
-      if (height) formData.append("height", String(Number(height)));
-      if (weight) formData.append("weight", String(Number(weight)));
+      if (height) formData.append("height", height);
+      if (weight) formData.append("weight", weight);
 
       await api.post("/me", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
+      //Redirects back to the profile page with a thing to show the success toast
       router.replace({ pathname: "/profile", params: { updated: "true" } });
     } catch (error: any) {
       const errors = error.response?.data?.errors;
       if (errors) {
+        //Combines all validation errors into a single string to show in the alert
         const allErrors = Object.entries(errors)
           .map(([field, msgs]) => `${field}: ${(msgs as string[]).join(", ")}`)
           .join("\n");
         Alert.alert("Validation Error", allErrors);
       } else {
+        //Falls back to a generic error message if something else went wrong
         Alert.alert(
           "Error",
           error.response?.data?.message ??
@@ -96,6 +104,7 @@ export default function EditProfile() {
     }
   }
 
+  //Loading icon while fetching profile data
   if (loading) {
     return (
       <View
