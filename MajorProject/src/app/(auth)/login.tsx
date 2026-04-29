@@ -19,10 +19,12 @@ export default function Login() {
   const [passwordError, setPasswordError] = useState("");
   const [generalError, setGeneralError] = useState("");
 
+  // Checks wether the form can be submitted
   const canSubmit = useMemo(() => {
     return email.trim().length > 0 && password.trim().length > 0;
   }, [email, password]);
 
+  // Clears all error messages
   function clearErrors() {
     setEmailError("");
     setPasswordError("");
@@ -35,40 +37,27 @@ export default function Login() {
     clearErrors();
     setLoading(true);
     try {
+      // Send a POST request to the login endpoint with the email and password
       const response = await api.post("/login", {
         email,
         password,
       });
 
+      // Stores the auth token to keep user logged in
       const token = response.data.token;
       await AsyncStorage.setItem("auth_token", token);
 
       router.replace("/(tabs)/home");
     } catch (error: any) {
       const errors = error.response?.data?.errors;
-      const message = error.response?.data?.message;
 
-      if (errors) {
-        if (errors.email) {
-          const emailErr = errors.email[0];
-          if (
-            emailErr.toLowerCase().includes("credentials") ||
-            emailErr.toLowerCase().includes("incorrect")
-          ) {
-            setGeneralError(
-              "The email or password you entered is incorrect. Please try again.",
-            );
-          } else {
-            setEmailError(emailErr);
-          }
-        }
-        if (errors.password) setPasswordError(errors.password[0]);
-      } else if (message) {
+      //If the error is password related it shows the error under the field, if not it shows a generic error message.
+      if (errors?.password) {
+        setPasswordError(errors.password[0]);
+      } else {
         setGeneralError(
           "The email or password you entered is incorrect. Please try again.",
         );
-      } else {
-        setGeneralError("Something went wrong. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -108,7 +97,7 @@ export default function Login() {
             {emailError ? (
               <Text
                 className="text-sm mt-1 ml-1"
-                style={{ color: theme.dangerText ?? "#e53e3e" }}
+                style={{ color: theme.dangerText }}
               >
                 {emailError}
               </Text>
@@ -130,7 +119,7 @@ export default function Login() {
             {passwordError ? (
               <Text
                 className="text-sm mt-1 ml-1"
-                style={{ color: theme.dangerText ?? "#e53e3e" }}
+                style={{ color: theme.dangerText }}
               >
                 {passwordError}
               </Text>
@@ -141,12 +130,9 @@ export default function Login() {
           {generalError ? (
             <View
               className="rounded-lg px-4 py-3"
-              style={{ backgroundColor: theme.danger ?? "#fff5f5" }}
+              style={{ backgroundColor: theme.danger }}
             >
-              <Text
-                className="text-sm"
-                style={{ color: theme.dangerText ?? "#e53e3e" }}
-              >
+              <Text className="text-sm" style={{ color: theme.dangerText }}>
                 {generalError}
               </Text>
             </View>

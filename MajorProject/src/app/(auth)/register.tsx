@@ -21,6 +21,7 @@ export default function Register() {
   const [passwordError, setPasswordError] = useState("");
   const [generalError, setGeneralError] = useState("");
 
+  // Checks whether the form can be submitted
   const canSubmit = useMemo(() => {
     return (
       name.trim().length > 0 &&
@@ -29,6 +30,7 @@ export default function Register() {
     );
   }, [name, email, password]);
 
+  // Clears all error messages
   function clearErrors() {
     setNameError("");
     setEmailError("");
@@ -41,6 +43,7 @@ export default function Register() {
     setLoading(true);
     clearErrors();
     try {
+      // Send a POST request to the register endpoint with the user's details
       const response = await api.post("/register", {
         name,
         email,
@@ -48,6 +51,7 @@ export default function Register() {
       });
 
       const token = response.data.token;
+      //saves the auth token to keep the user logged in
       await AsyncStorage.setItem("auth_token", token);
 
       router.replace("/(tabs)/home");
@@ -55,12 +59,10 @@ export default function Register() {
       const errors = error.response?.data?.errors;
 
       if (errors) {
+        // Displays errors above each field
         if (errors.name) setNameError(errors.name[0]);
         if (errors.email) setEmailError(errors.email[0]);
         if (errors.password) setPasswordError(errors.password[0]);
-        if (!errors.name && !errors.email && !errors.password) {
-          setGeneralError("Something went wrong. Please try again.");
-        }
       } else {
         setGeneralError("Something went wrong. Please try again.");
       }
@@ -100,7 +102,7 @@ export default function Register() {
             {nameError ? (
               <Text
                 className="text-sm mt-1 ml-1"
-                style={{ color: theme.dangerText ?? "#e53e3e" }}
+                style={{ color: theme.dangerText }}
               >
                 {nameError}
               </Text>
@@ -122,7 +124,7 @@ export default function Register() {
             {emailError ? (
               <Text
                 className="text-sm mt-1 ml-1"
-                style={{ color: theme.dangerText ?? "#e53e3e" }}
+                style={{ color: theme.dangerText }}
               >
                 {emailError}
               </Text>
@@ -143,7 +145,7 @@ export default function Register() {
             {passwordError ? (
               <Text
                 className="text-sm mt-1 ml-1"
-                style={{ color: theme.dangerText ?? "#e53e3e" }}
+                style={{ color: theme.dangerText }}
               >
                 {passwordError}
               </Text>
@@ -154,12 +156,9 @@ export default function Register() {
           {generalError ? (
             <View
               className="rounded-lg px-4 py-3"
-              style={{ backgroundColor: theme.danger ?? "#fff5f5" }}
+              style={{ backgroundColor: theme.danger }}
             >
-              <Text
-                className="text-sm"
-                style={{ color: theme.dangerText ?? "#e53e3e" }}
-              >
+              <Text className="text-sm" style={{ color: theme.dangerText }}>
                 {generalError}
               </Text>
             </View>
