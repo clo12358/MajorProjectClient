@@ -21,6 +21,7 @@ import { SettingsRow } from "../../components/custom/settings-row";
 import { Toast } from "../../components/custom/toast";
 import { Colors, ThemeName } from "../../constants/theme";
 
+// Defines the shape of the user object returned from the API
 interface User {
   id: number;
   name: string;
@@ -31,6 +32,7 @@ interface User {
   profile_image: string | null;
 }
 
+// Array of available themes for the user to choose from
 const THEMES: { name: ThemeName; label: string; description: string }[] = [
   {
     name: "light",
@@ -73,6 +75,7 @@ export default function Profile() {
   const [localAvatar, setLocalAvatar] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [exportingReport, setExportingReport] = useState(false);
+  //This will display if a quote cant be fetched from the API
   const [quote, setQuote] = useState(
     "Enjoy the process. The results will come.",
   );
@@ -81,17 +84,21 @@ export default function Profile() {
   const { updated } = useLocalSearchParams<{ updated?: string }>();
   const [showToast, setShowToast] = useState(false);
 
+  // Fetch the quote when the component first loads
   useEffect(() => {
     fetchQuote();
   }, []);
 
+  // Re-fetches the user's profile data every time this screen comes into focus
   useFocusEffect(
     useCallback(() => {
       async function load() {
         try {
+          // Fetch the user's profile data from the API
           const response = await api.get("/me");
           const u = response.data;
           setUser(u);
+          // Fetches the locally saved avatar so the most recently saved one is always shown
           const saved = await AsyncStorage.getItem(`avatar_url_${u.id}`);
           setLocalAvatar(saved ?? null);
         } catch (error) {
@@ -104,6 +111,7 @@ export default function Profile() {
     }, []),
   );
 
+  //This checks if the user has just updated their profile and shows a toast notification to say its completed
   useEffect(() => {
     if (updated === "true") {
       setShowToast(true);
@@ -111,6 +119,7 @@ export default function Profile() {
     }
   }, [updated]);
 
+  // Fetches a random quote
   async function fetchQuote() {
     try {
       const randomId = Math.floor(Math.random() * 1385) + 1;
@@ -122,11 +131,13 @@ export default function Profile() {
     }
   }
 
+  // Logs the user out by removing the auth token and redirecting to the login screen
   async function handleLogout() {
     await AsyncStorage.removeItem("auth_token");
     router.replace("/(auth)/login");
   }
 
+  //Handles the report button. Generates and shares the PDF report by calling the generateAndShareReport() function, which is in the generateReport.ts file.
   async function handleExportReport() {
     setExportingReport(true);
     try {
@@ -281,6 +292,7 @@ export default function Profile() {
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ gap: 12, paddingBottom: 8 }}
             >
+              {/* Loops through the THEMES array to show each theme option */}
               {THEMES.map((t) => {
                 const preview = Colors[t.name];
                 const isSelected = themeName === t.name;
@@ -321,19 +333,24 @@ export default function Profile() {
                           preview.primary,
                           preview.secondary,
                           preview.accent,
-                        ].map((colour, i) => (
-                          <View
-                            key={i}
-                            style={{
-                              width: 18,
-                              height: 18,
-                              borderRadius: 9,
-                              backgroundColor: colour,
-                              borderWidth: 1,
-                              borderColor: preview.backgroundSelected,
-                            }}
-                          />
-                        ))}
+                        ].map(
+                          (
+                            colour,
+                            i, //Loops through the 4 colour swatches for each theme to show
+                          ) => (
+                            <View
+                              key={i}
+                              style={{
+                                width: 18,
+                                height: 18,
+                                borderRadius: 9,
+                                backgroundColor: colour,
+                                borderWidth: 1,
+                                borderColor: preview.backgroundSelected,
+                              }}
+                            />
+                          ),
+                        )}
                       </View>
 
                       <View>
@@ -379,6 +396,7 @@ export default function Profile() {
         </View>
       </Modal>
 
+      {/* Profile updated toast */}
       <Toast
         message="Profile updated successfully"
         visible={showToast}

@@ -4,6 +4,7 @@ import { Platform } from "react-native";
 
 import api from "./axios";
 
+// Defining the shape of the data that will be fetched from the API
 interface Profile {
   name: string | null;
   dob: string | null;
@@ -45,19 +46,24 @@ interface Journal {
   feeling: "great" | "good" | "okay" | "low" | "awful" | null;
 }
 
+//Calculates the users age from the DOB
 function calculateAge(dob: string | null): string {
   if (!dob) return "N/A";
   const birth = new Date(dob);
   const today = new Date();
   const age = today.getFullYear() - birth.getFullYear();
+  // Subtract 1 if the user's birthday hasn't occurred yet this year
   const m = today.getMonth() - birth.getMonth();
   return String(
+    // Checks whether the user's birthday has happened yet this year
     m < 0 || (m === 0 && today.getDate() < birth.getDate()) ? age - 1 : age,
   );
 }
 
+//This formats the date from YYYY-MM-DD to DD/MM/YYYY format
 function formatDate(dateString: string | null | undefined): string {
   if (!dateString) return "N/A";
+  // The T00:00:00 prevents timezone issues shifting the date by a day
   return new Date(`${dateString}T00:00:00`).toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "2-digit",
@@ -65,21 +71,15 @@ function formatDate(dateString: string | null | undefined): string {
   });
 }
 
-function formatDateLong(dateString: string | null | undefined): string {
-  if (!dateString) return "N/A";
-  return new Date(`${dateString}T00:00:00`).toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
-
+//Calculates the duration of a period in days. If the end date is null, it returns "Ongoing"
 function periodDuration(start: string, end: string | null): string {
   if (!end) return "Ongoing";
   const days =
+    // // Divides the difference in milliseconds between the two dates by 1000ms→1s→60m→24h to get days
     Math.round(
       (new Date(end).getTime() - new Date(start).getTime()) /
         (1000 * 60 * 60 * 24),
+      //+1 to include the start day
     ) + 1;
   return `${days} days`;
 }
@@ -90,7 +90,9 @@ function buildHtml(
   logs: DailyLog[],
   journals: Journal[],
 ): string {
+  // Filter out any cycles that don't have a cycle length yet
   const completedCycles = cycles.filter((c) => c.cycle_length !== null);
+  // Calculate the average cycle length across all completed cycles
   const avgCycle =
     completedCycles.length > 0
       ? (
@@ -99,29 +101,42 @@ function buildHtml(
         ).toFixed(1)
       : "N/A";
 
+  //Extract just the cycle lengths into a plain num array for min/max calculations
   const cycleLengths = completedCycles.map((c) => c.cycle_length as number);
+
+  // Seperates cycleLengths array into individual arguments and returns the largest value, or null if there's no data
+  // '...' is the spread operator, it takes the values from the array and passes them as individual arguments to the function
   const longestCycle =
     cycleLengths.length > 0 ? Math.max(...cycleLengths) : null;
   const shortestCycle =
     cycleLengths.length > 0 ? Math.min(...cycleLengths) : null;
 
+  //Flatten all periods from every cycle into a single array
   const allPeriods = cycles.flatMap((c) => c.periods);
+
+  //Calculate the length in days of each completed period
   const periodLengths = allPeriods
     .filter((p) => p.end_date)
     .map(
       (p) =>
+        // Divides the difference in milliseconds between the two dates by 1000ms→1s→60m→24h to get days
         Math.round(
           (new Date(p.end_date!).getTime() - new Date(p.start_date).getTime()) /
             (1000 * 60 * 60 * 24),
+          //+1 to include the start day
         ) + 1,
     );
+
+  // Calculate the average period length, rounded to 1 decimal place
   const avgPeriod =
     periodLengths.length > 0
-      ? (
+      ? // Sums up all the period lengths and divides by the number of periods to get the average
+        (
           periodLengths.reduce((s, d) => s + d, 0) / periodLengths.length
         ).toFixed(1)
       : "N/A";
 
+  // Count how many times each symptom has been logged across all daily logs
   const countMap: Record<string, number> = {};
   for (const log of logs) {
     for (const ds of log.daily_symptoms ?? []) {
@@ -129,10 +144,13 @@ function buildHtml(
       if (name) countMap[name] = (countMap[name] ?? 0) + 1;
     }
   }
+
+  // Sort symptoms by frequency and take the top 10
   const topSymptoms = Object.entries(countMap)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 10);
 
+  // Counts how many times each mood has been logged across all journal entries
   const moodCount: Record<string, number> = {
     great: 0,
     good: 0,
@@ -140,19 +158,25 @@ function buildHtml(
     low: 0,
     awful: 0,
   };
+  // The '??' returns the value on the right if the value on the left is null or undefined
   for (const j of journals) {
     if (j.feeling) moodCount[j.feeling] = (moodCount[j.feeling] ?? 0) + 1;
   }
 
+  //Formats the date for the header of the report.
   const reportDate = new Date().toLocaleDateString("en-GB", {
     day: "numeric",
     month: "long",
     year: "numeric",
   });
 
+  // Calculates the regularity of the user's cycles based on the variance between the shortest and longest cycle.
   let regularityNote = "Insufficient data";
   if (cycleLengths.length >= 2) {
+    // Variance is the difference between the longest and shortest cycle
     const variance = Math.max(...cycleLengths) - Math.min(...cycleLengths);
+
+    // Categorise regularity based on how much the cycles vary
     if (variance <= 3) regularityNote = `Regular (varies by ±${variance} days)`;
     else if (variance <= 7)
       regularityNote = `Slightly irregular (varies by ±${variance} days)`;
@@ -483,6 +507,7 @@ function buildHtml(
 }
 
 export async function generateAndShareReport() {
+  //Fetches all data at ine time to speed up the process
   const [profileRes, cyclesRes, logsRes, journalsRes] = await Promise.all([
     api.get("/me"),
     api.get("/cycles"),
@@ -490,14 +515,17 @@ export async function generateAndShareReport() {
     api.get("/journals"),
   ]);
 
+  // Extracts all the data
   const profile: Profile = profileRes.data;
   const cycles: Cycle[] = cyclesRes.data ?? [];
   const logs: DailyLog[] = logsRes.data ?? [];
   const journals: Journal[] = journalsRes.data ?? [];
 
+  // This builds the HTML string for the report
   const html = buildHtml(profile, cycles, logs, journals);
 
   if (Platform.OS === "web") {
+    // On web — open the HTML report in a new browser tab
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -506,6 +534,7 @@ export async function generateAndShareReport() {
     a.click();
     URL.revokeObjectURL(url);
   } else {
+    // On mobile — convert the HTML to a PDF file and open the share sheet
     const { uri } = await Print.printToFileAsync({ html });
     await Sharing.shareAsync(uri, {
       mimeType: "application/pdf",
