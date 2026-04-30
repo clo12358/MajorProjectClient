@@ -95,7 +95,10 @@ function formatDate(date: Date): string {
 export default function Home() {
   const { themeName, setTheme } = useTheme();
   const theme = Colors[themeName];
-  const params = useLocalSearchParams<{ journalSaved?: string; date?: string }>();
+  const params = useLocalSearchParams<{
+    journalSaved?: string;
+    date?: string;
+  }>();
   const dateChipsRef = useRef<DateChipsRef>(null);
 
   const today = new Date();
@@ -585,7 +588,15 @@ export default function Home() {
                 className="text-xs mb-3"
                 style={{ color: theme.textSecondary }}
               >
-                Period active since {activePeriod.start_date}
+                Period active since{" "}
+                <Text style={{ color: theme.text, fontWeight: "600" }}>
+                  {new Date(
+                    `${activePeriod.start_date}T00:00:00`,
+                  ).toLocaleDateString("en-GB", {
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </Text>
               </Text>
             ) : (
               <Text
