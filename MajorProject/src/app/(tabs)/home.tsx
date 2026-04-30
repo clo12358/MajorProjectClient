@@ -18,18 +18,7 @@ import {
 import { Toast } from "../../components/custom/toast";
 import { Colors } from "../../constants/theme";
 
-const flowMap: Record<string, { flow: string; has_clots: boolean }> = {
-  Light: { flow: "light", has_clots: false },
-  Medium: { flow: "medium", has_clots: false },
-  Heavy: { flow: "heavy", has_clots: false },
-  "Blood Clots": { flow: "heavy", has_clots: true },
-};
-
-function getPeriodLabel(flow: string, has_clots: boolean): string {
-  if (has_clots) return "Blood Clots";
-  return flow.charAt(0).toUpperCase() + flow.slice(1);
-}
-
+// These set the shapes of all the data that is going to be fetched from the API
 interface Cycle {
   id: number;
   start_date: string;
@@ -77,14 +66,7 @@ type SavedSymptom = {
   category: string;
 };
 
-const apiFeelingToLabel: Record<string, string> = {
-  great: "Great",
-  good: "Good",
-  okay: "Okay",
-  low: "Low",
-  awful: "Awful",
-};
-
+// Formats a Date object into YYYY-MM-DD for the API
 function formatDate(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -95,6 +77,8 @@ function formatDate(date: Date): string {
 export default function Home() {
   const { themeName, setTheme } = useTheme();
   const theme = Colors[themeName];
+
+  // Read any route params passed to this screen
   const params = useLocalSearchParams<{
     journalSaved?: string;
     date?: string;
@@ -105,10 +89,12 @@ export default function Home() {
   const todayString = formatDate(today);
 
   const [selectedDate, setSelectedDate] = useState(todayString);
-  const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
-  const [loggedPeriodForDate, setLoggedPeriodForDate] = useState<string | null>(
+  const [selectedFlow, setSelectedFlow] = useState<string | null>(null);
+  const [hasClots, setHasClots] = useState(false);
+  const [loggedFlowForDate, setLoggedFlowForDate] = useState<string | null>(
     null,
   );
+  const [loggedClotsForDate, setLoggedClotsForDate] = useState(false);
   const [showSymptomsModal, setShowSymptomsModal] = useState(false);
   const [selectedSymptomIds, setSelectedSymptomIds] = useState<number[]>([]);
   const [loggingPeriod, setLoggingPeriod] = useState(false);
@@ -121,7 +107,6 @@ export default function Home() {
   );
   const [todayLogId, setTodayLogId] = useState<number | null>(null);
   const [journalPreview, setJournalPreview] = useState("");
-  const [journalFeeling, setJournalFeeling] = useState<string | null>(null);
   const [activePeriod, setActivePeriod] = useState<{
     id: number;
     start_date: string;
@@ -135,6 +120,7 @@ export default function Home() {
   const [quote, setQuote] = useState("The best is yet to come.");
   const [toastVisible, setToastVisible] = useState(false);
 
+  // Generates an array of 63 days centred around today
   const days = Array.from({ length: 63 }, (_, index) => {
     const date = new Date(today);
     date.setDate(today.getDate() - 30 + index);
@@ -145,15 +131,14 @@ export default function Home() {
     };
   });
 
-  const isViewingToday = selectedDate === todayString;
-
+  // Format the selected date for display in the UI
   const selectedDateObj = new Date(`${selectedDate}T00:00:00`);
   const formattedSelectedDate = selectedDateObj.toLocaleDateString("en-GB", {
     month: "long",
     day: "numeric",
   });
 
-  const periodOptions = ["Light", "Medium", "Heavy", "Blood Clots"];
+  const periodOptions = ["Light", "Medium", "Heavy"];
   const moodCategory = categories.find((c) => c.name === "Mood");
   const feelingSymptoms = moodCategory?.symptoms.slice(0, 8) ?? [];
   const allSymptoms = categories.flatMap((c) => c.symptoms);
@@ -171,12 +156,14 @@ export default function Home() {
   useEffect(() => {
     if (cycles.length === 0) return;
 
+    // Find the active cycle for the selected date
     const activeCycle = cycles.find((c) => {
       const afterStart = selectedDate >= c.start_date;
       const beforeEnd = c.end_date === null || selectedDate <= c.end_date;
       return afterStart && beforeEnd;
     });
 
+    // If no active cycle, reset cycle day
     if (!activeCycle) {
       setCycleDay(null);
       return;
@@ -185,26 +172,36 @@ export default function Home() {
     const start = new Date(`${activeCycle.start_date}T00:00:00`);
     const end = new Date(`${selectedDate}T00:00:00`);
     const day =
+      // Calculate the difference in days and add 1 to make it 1-indexed
       Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     setCycleDay(day > 0 ? day : null);
   }, [selectedDate, cycles]);
 
-  // Update logged period pill when date or period logs change
+  // Update logged period state when the selected date or period logs change
   useEffect(() => {
     const log = periodLogsByDate[selectedDate];
     if (log) {
-      setLoggedPeriodForDate(getPeriodLabel(log.flow, Boolean(log.has_clots)));
+      // Capitalise the flow value from the API
+      setLoggedFlowForDate(
+        log.flow.charAt(0).toUpperCase() + log.flow.slice(1),
+      );
+      setLoggedClotsForDate(Boolean(log.has_clots));
     } else {
-      setLoggedPeriodForDate(null);
+      // If there's no log for this date, reset the logged flow and clots state
+      setLoggedFlowForDate(null);
+      setLoggedClotsForDate(false);
     }
-    setSelectedPeriod(null);
+    // Reset the user's current selection when the date changes
+    setSelectedFlow(null);
+    setHasClots(false);
   }, [selectedDate, periodLogsByDate]);
 
-  // Refetch journal/symptoms whenever selectedDate changes
+  // Refetch journal/symptoms whenever the selected date changes
   useEffect(() => {
     fetchJournalPreviewForDate(selectedDate);
   }, [selectedDate]);
 
+  // Show the journal saved toast
   useEffect(() => {
     if (params.journalSaved === "1") {
       setToastVisible(true);
@@ -212,6 +209,7 @@ export default function Home() {
     }
   }, [params.journalSaved]);
 
+  // Scroll the date chips to the date picked
   useEffect(() => {
     if (params.date) {
       setSelectedDate(params.date);
@@ -222,32 +220,25 @@ export default function Home() {
     }
   }, [params.date]);
 
+  // Refetch journal preview every time the screen is opened
   useFocusEffect(
     useCallback(() => {
       fetchJournalPreviewForDate(selectedDate);
     }, [selectedDate]),
   );
 
+  //Trims the journal text to only show the first 70 characters
   function truncateText(text: string, maxLength = 70) {
     const trimmed = text.trim();
+    // Return empty string if there's no text
     if (!trimmed) return "";
+    // Return as-is if it's short enough
     if (trimmed.length <= maxLength) return trimmed;
+    // Otherwise, trim and add ...
     return `${trimmed.slice(0, maxLength).trim()}...`;
   }
 
-  function getJournalFromDailyLog(data: DailyLogResponse) {
-    if (data.journal) {
-      return {
-        entry: data.journal.entry ?? "",
-        feeling: data.journal.feeling ?? null,
-      };
-    }
-    return {
-      entry: data.entry ?? "",
-      feeling: data.feeling ?? null,
-    };
-  }
-
+  // Fetches all cycles for the logged in user
   async function fetchAllCycles() {
     try {
       const response = await api.get("/cycles");
@@ -258,19 +249,24 @@ export default function Home() {
     }
   }
 
+  // Fetches all period logs and organises them by date for quick lookup
   async function fetchPeriodLogs() {
     try {
+      // Fetch all periods to get their IDs
       const periodsResponse = await api.get("/periods");
       const periods = periodsResponse.data ?? [];
+      //If no periods, stops here
       if (periods.length === 0) return;
 
+      //Fetch all period days for each period
       const singlePeriodResponses = await Promise.all(
         periods.map((p: any) => api.get(`/periods/${p.id}`)),
       );
 
+      // Organise period days by date for easy lookup
       const byDate: Record<string, PeriodDay> = {};
       singlePeriodResponses
-        .flatMap((r) => r.data?.days ?? [])
+        .flatMap((r) => r.data?.days ?? []) // Flatten all days from all periods into one array
         .forEach((day: PeriodDay) => {
           byDate[day.date] = day;
         });
@@ -281,6 +277,7 @@ export default function Home() {
     }
   }
 
+  // Fetches a random quote from the DummyJSON API
   async function fetchQuote() {
     try {
       const randomId = Math.floor(Math.random() * 1385) + 1;
@@ -292,12 +289,14 @@ export default function Home() {
     }
   }
 
+  // Fetches symptom categories and their symptoms, then combines them into one array
   async function fetchCategories() {
     try {
       const [catRes, symRes] = await Promise.all([
         api.get("/categories"),
         api.get("/symptoms"),
       ]);
+      // Combine categories with their symptoms by matching category_id
       const cats: Category[] = catRes.data.map((cat: any) => ({
         ...cat,
         symptoms: symRes.data.filter((s: Symptom) => s.category_id === cat.id),
@@ -308,6 +307,7 @@ export default function Home() {
     }
   }
 
+  // Creates or retrieves the daily log for a given date and returns its ID
   async function fetchOrCreateLogForDate(date: string): Promise<number | null> {
     try {
       const response = await api.post("/daily-logs", { date });
@@ -321,40 +321,42 @@ export default function Home() {
     }
   }
 
+  // Fetches the journal entry and symptoms for a given date and updates the UI
   async function fetchJournalPreviewForDate(date: string) {
     try {
+      //uses the custom function to get the daily log
       const logId = await fetchOrCreateLogForDate(date);
       if (!logId) {
         setJournalPreview("");
-        setJournalFeeling(null);
         setSavedSymptomNames([]);
         return;
       }
 
+      //
       const response = await api.get(`/daily-logs/${logId}`);
       const log: DailyLogResponse = response.data;
-      const journal = getJournalFromDailyLog(log);
 
-      setJournalPreview(truncateText(journal.entry ?? ""));
-      setJournalFeeling(
-        journal.feeling
-          ? (apiFeelingToLabel[journal.feeling.toLowerCase()] ?? null)
-          : null,
-      );
+      // Read journal entry directly from the journal object
+      const entry = log.journal?.entry ?? "";
+      setJournalPreview(truncateText(entry));
 
-      const enriched: SavedSymptom[] = log.daily_symptoms
-        ?.map((ds: any) => {
-          const symptom = allSymptoms.find((s) => s.id === ds.symptom_id);
-          const category = categories.find((c) =>
-            c.symptoms.some((s) => s.id === ds.symptom_id),
-          );
-          return symptom
-            ? { name: symptom.name, category: category?.name ?? "Symptoms" }
-            : null;
-        })
-        .filter(Boolean) as SavedSymptom[];
+      // Builds a list of logged symptoms with their name and category
+      const enriched: SavedSymptom[] =
+        log.daily_symptoms
+          ?.filter((ds: any) => ds.symptom?.name)
+          .map((ds: any) => {
+            // Find which category this symptom belongs to
+            const category = categories.find((c) =>
+              c.symptoms.some((s) => s.id === ds.symptom_id),
+            );
+            return {
+              name: ds.symptom.name,
+              category: category?.name ?? "Symptoms",
+            };
+          }) ?? [];
 
       setSavedSymptomNames(enriched ?? []);
+      // Save the raw symptom IDs so the correct pills show as selected when the modal opens
       setSelectedSymptomIds(
         log.daily_symptoms?.map((ds: any) => ds.symptom_id).filter(Boolean) ??
           [],
@@ -362,11 +364,11 @@ export default function Home() {
     } catch (error) {
       console.error("Failed to fetch journal preview:", error);
       setJournalPreview("");
-      setJournalFeeling(null);
       setSavedSymptomNames([]);
     }
   }
 
+  // Opens the symptoms modal for the selected date
   async function handleOpenSymptomsModal() {
     const logId = await fetchOrCreateLogForDate(selectedDate);
     if (!logId) return;
@@ -374,6 +376,7 @@ export default function Home() {
     setShowSymptomsModal(true);
   }
 
+  // Navigates to the journal screen for the selected date
   async function handleOpenJournal() {
     setOpeningJournal(true);
     try {
@@ -388,7 +391,9 @@ export default function Home() {
     }
   }
 
+  // Saves the selected symptoms to the daily log and closes the modal
   async function saveSymptoms() {
+    // If there's no log or no symptoms selected, just close the modal
     if (!todayLogId || selectedSymptomIds.length === 0) {
       setShowSymptomsModal(false);
       return;
@@ -396,10 +401,12 @@ export default function Home() {
 
     setSavingSymptoms(true);
     try {
+      // Post the selected symptom IDs to the daily log
       await api.post(`/daily-logs/${todayLogId}/symptoms`, {
         items: selectedSymptomIds.map((id) => ({ symptom_id: id })),
       });
 
+      // Builds the list for display using the saved symptoms
       const enriched: SavedSymptom[] = selectedSymptomIds
         .map((id) => {
           const symptom = allSymptoms.find((s) => s.id === id);
@@ -421,6 +428,7 @@ export default function Home() {
     }
   }
 
+  // Fetches all periods and sets the active one
   async function fetchActivePeriod() {
     try {
       const response = await api.get("/periods");
@@ -432,17 +440,19 @@ export default function Home() {
     }
   }
 
+  // Logs a period day with the selected flow level and clots flag
   async function handleLogPeriod() {
-    if (!selectedPeriod) {
+    // Prevent logging if no flow level is selected
+    if (!selectedFlow) {
       Alert.alert("Select Flow", "Please select a flow level before logging.");
       return;
     }
 
     setLoggingPeriod(true);
     try {
-      const { flow, has_clots } = flowMap[selectedPeriod];
       let periodId: number;
 
+      // Use the existing active period or create a new one
       if (activePeriod) {
         periodId = activePeriod.id;
       } else {
@@ -453,19 +463,22 @@ export default function Home() {
         await fetchActivePeriod();
       }
 
+      // Log the period day with the selected flow and clots flag
       await api.put(`/periods/${periodId}/days`, {
         date: selectedDate,
-        flow,
-        has_clots,
+        flow: selectedFlow.toLowerCase(),
+        has_clots: hasClots,
       });
 
+      // Refresh all period data in one call
       await fetchPeriodLogs();
 
       Alert.alert(
         "Logged!",
-        `Period logged as ${selectedPeriod} for ${formattedSelectedDate}.`,
+        `Period logged as ${selectedFlow}${hasClots ? " with blood clots" : ""} for ${formattedSelectedDate}.`,
       );
-      setSelectedPeriod(null);
+      setSelectedFlow(null);
+      setHasClots(false);
     } catch (error: any) {
       const message = error.response?.data?.message;
       Alert.alert(
@@ -477,7 +490,9 @@ export default function Home() {
     }
   }
 
+  // Ends the active period on the selected date
   async function handleEndPeriodToday() {
+    // Prevent ending if there's no active period
     if (!activePeriod) {
       Alert.alert("No Active Period", "There is no active period to end.");
       return;
@@ -485,12 +500,15 @@ export default function Home() {
 
     setEndingPeriod(true);
     try {
+      // Sends the end date to the API to close off the active period
       await api.put(`/periods/${activePeriod.id}`, { end_date: selectedDate });
       Alert.alert(
         "Period Ended",
         `Your period was ended on ${formattedSelectedDate}.`,
       );
-      setSelectedPeriod(null);
+      setSelectedFlow(null);
+      setHasClots(false);
+      // Refresh all period data in one call
       await fetchActivePeriod();
     } catch (error: any) {
       const message = error.response?.data?.message;
@@ -503,6 +521,7 @@ export default function Home() {
     }
   }
 
+  // Toggles a symptom on or off in the selected symptoms list
   function toggleSymptom(symptomId: number) {
     setSelectedSymptomIds((prev) =>
       prev.includes(symptomId)
@@ -530,7 +549,8 @@ export default function Home() {
           onSelectDate={setSelectedDate}
         />
 
-        {!isViewingToday && (
+        {/* Banner shown when viewing a date other than today */}
+        {selectedDate !== todayString && (
           <Pressable
             onPress={() => {
               setSelectedDate(todayString);
@@ -607,21 +627,29 @@ export default function Home() {
               </Text>
             )}
 
-            <View className="flex-row flex-wrap gap-2 mb-4">
+            {/* Flow level pills */}
+            <View className="flex-row flex-wrap gap-2 mb-3">
               {periodOptions.map((option) => (
                 <PillButton
                   key={option}
                   label={option}
-                  selected={selectedPeriod === option}
-                  logged={loggedPeriodForDate === option}
-                  onPress={() => setSelectedPeriod(option)}
+                  selected={selectedFlow === option}
+                  logged={loggedFlowForDate === option}
+                  onPress={() => setSelectedFlow(option)}
                 />
               ))}
+              {/* Blood clots as a toggleable pill */}
+              <PillButton
+                label="Blood Clots"
+                selected={hasClots}
+                logged={loggedClotsForDate}
+                onPress={() => setHasClots((prev) => !prev)}
+              />
             </View>
 
             <LargeButton
               title={loggingPeriod ? "Logging..." : "Log Period"}
-              disabled={loggingPeriod || !selectedPeriod}
+              disabled={loggingPeriod || !selectedFlow}
               onPress={handleLogPeriod}
             />
 
