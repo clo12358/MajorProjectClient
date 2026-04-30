@@ -9,6 +9,7 @@ import { InfoCard } from "../../components/custom/info-card";
 import { Legend } from "../../components/custom/legend";
 import { Colors } from "../../constants/theme";
 
+// These set the shapes of all the data that is going to be fetched from the API
 interface Period {
   id: number;
   cycle_id: number;
@@ -68,6 +69,7 @@ type SavedSymptom = {
   category: string;
 };
 
+// Formats a Date object into YYYY-MM-DD for the API
 function formatDateString(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -75,6 +77,7 @@ function formatDateString(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+// Calculates the number of days between two date strings
 function getDayDifference(startDate: string, endDate: string): number {
   const start = new Date(`${startDate}T00:00:00`);
   const end = new Date(`${endDate}T00:00:00`);
@@ -83,6 +86,7 @@ function getDayDifference(startDate: string, endDate: string): number {
 
 const todayString = formatDateString(new Date());
 
+// The category name used to identify sex related symptoms
 const SEX_CATEGORY = "Sex & Sex Drive";
 
 export default function CalendarPage() {
@@ -101,25 +105,18 @@ export default function CalendarPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [hasAnyData, setHasAnyData] = useState<boolean | null>(null);
 
+  // Falls back to today if no date is selected
   const displayDate = selectedDate ?? todayString;
 
+  // Fetch all data
   useEffect(() => {
-    fetchAllData();
+    fetchCycles();
+    fetchCalendarData();
+    fetchAllDailyLogs();
     fetchCategories();
   }, []);
 
-  async function fetchAllData() {
-    try {
-      await Promise.all([
-        fetchCycles(),
-        fetchCalendarData(),
-        fetchAllDailyLogs(),
-      ]);
-    } catch (error) {
-      console.error("Failed to fetch data:", error);
-    }
-  }
-
+  // Fetches symptom categories and combines them with their symptoms
   async function fetchCategories() {
     try {
       const [catRes, symRes] = await Promise.all([
@@ -136,6 +133,7 @@ export default function CalendarPage() {
     }
   }
 
+  // Fetches all cycles and sets whether the user has any data at all
   async function fetchCycles() {
     try {
       const response = await api.get("/cycles");
@@ -148,10 +146,12 @@ export default function CalendarPage() {
     }
   }
 
+  // Returns all dates between a start and end date as an array
   function getDatesInRange(startDate: string, endDate: string): string[] {
     const dates: string[] = [];
     const current = new Date(`${startDate}T00:00:00`);
     const end = new Date(`${endDate}T00:00:00`);
+    // Loop through each day and add it to the array until we reach the end date
     while (current <= end) {
       dates.push(formatDateString(current));
       current.setDate(current.getDate() + 1);
@@ -159,6 +159,7 @@ export default function CalendarPage() {
     return dates;
   }
 
+  // Fetches all periods and builds the list of period dates and day-level logs
   async function fetchCalendarData() {
     try {
       const periodsResponse = await api.get("/periods");
@@ -170,15 +171,18 @@ export default function CalendarPage() {
         return;
       }
 
+      // Builds a flat list of all dates that fall within any period
       const allMarkedDates = periods.flatMap((period) =>
         getDatesInRange(period.start_date, period.end_date ?? todayString),
       );
       setPeriodDates([...new Set(allMarkedDates)].sort());
 
+      // Fetch each period individually to get their day-by-day logs
       const singlePeriodResponses = await Promise.all(
         periods.map((period) => api.get(`/periods/${period.id}`)),
       );
 
+      // Build a lookup object where the key is the date and the value is the period day log
       const byDate: Record<string, PeriodDay> = {};
       singlePeriodResponses
         .flatMap((r) => (r.data as SinglePeriodResponse).days ?? [])
@@ -192,6 +196,7 @@ export default function CalendarPage() {
     }
   }
 
+  // Fetches all daily logs and organises them by date for quick lookup
   async function fetchAllDailyLogs() {
     try {
       const response = await api.get("/daily-logs");
@@ -206,6 +211,7 @@ export default function CalendarPage() {
     }
   }
 
+  // Returns all dates that have a sex related symptom logged
   const sexDates = useMemo(() => {
     return Object.entries(dailyLogsByDate)
       .filter(([_, log]) =>
@@ -216,6 +222,7 @@ export default function CalendarPage() {
       .map(([date]) => date);
   }, [dailyLogsByDate]);
 
+  // Calculates which day of the cycle the selected date falls on
   const cycleDay = useMemo(() => {
     if (cycles.length === 0) return null;
 
@@ -231,6 +238,7 @@ export default function CalendarPage() {
     return day > 0 ? day : null;
   }, [cycles, displayDate]);
 
+  // Formats the selected date into a readable string for the info card title
   const infoTitle = useMemo(() => {
     const date = new Date(`${displayDate}T00:00:00`);
     return date.toLocaleDateString("en-GB", {
@@ -244,6 +252,7 @@ export default function CalendarPage() {
   const isPeriodDate = periodDates.includes(displayDate);
   const dailyLog = dailyLogsByDate[displayDate];
 
+  // Builds the list of saved symptoms for the selected date
   const savedSymptoms: SavedSymptom[] = useMemo(() => {
     if (!dailyLog?.daily_symptoms) return [];
     return dailyLog.daily_symptoms
@@ -263,12 +272,14 @@ export default function CalendarPage() {
   const dateHasNoData =
     !selectedDayLog && !isPeriodDate && savedSymptoms.length === 0;
 
+  // Returns the title for the cycle day info card
   function getCycleTitle(): string {
     if (hasAnyData === false) return "Nothing logged yet";
     if (!cycleDay) return "No cycle data for this date";
     return `Cycle Day ${cycleDay}`;
   }
 
+  // Returns the subtitle for the period info card based on what's logged for the selected date
   function getPeriodSubtitle(): string {
     if (hasAnyData === false) {
       return "Start logging your cycle on the home page to see your data here.";
@@ -278,6 +289,7 @@ export default function CalendarPage() {
     }
     if (selectedDayLog) {
       const { flow, has_clots } = selectedDayLog;
+      // Capitalise the flow value from the API e.g. "heavy" → "Heavy"
       const capitalised = flow.charAt(0).toUpperCase() + flow.slice(1);
       return has_clots
         ? `${capitalised} flow with blood clots`
@@ -294,10 +306,12 @@ export default function CalendarPage() {
         showsVerticalScrollIndicator={false}
       >
         <View className="px-5 pt-8">
+          {/* Cycle day info card */}
           <View className="mt-5 mb-4">
             <InfoCard title={getCycleTitle()} />
           </View>
 
+          {/* Main calendar */}
           <CalendarCard
             todayString={todayString}
             selectedDate={selectedDate}
@@ -306,6 +320,7 @@ export default function CalendarPage() {
             sexDates={sexDates}
           />
 
+          {/* Calendar legend */}
           <View className="mt-4">
             <Legend
               items={[
@@ -320,6 +335,7 @@ export default function CalendarPage() {
             />
           </View>
 
+          {/* Selected date info card with symptoms and log button */}
           <View className="mt-5">
             <InfoCard
               title={infoTitle}

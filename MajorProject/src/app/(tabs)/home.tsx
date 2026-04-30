@@ -508,7 +508,6 @@ export default function Home() {
       );
       setSelectedFlow(null);
       setHasClots(false);
-      // Refresh all period data in one call
       await fetchActivePeriod();
     } catch (error: any) {
       const message = error.response?.data?.message;
