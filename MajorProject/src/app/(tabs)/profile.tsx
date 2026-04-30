@@ -45,24 +45,24 @@ const THEMES: { name: ThemeName; label: string; description: string }[] = [
     description: "Deep teal darks",
   },
   {
-    name: "rose",
-    label: "Rose",
-    description: "Soft warm pinks",
+    name: "nordic",
+    label: "Nordic",
+    description: "Ice blue & purple",
   },
   {
-    name: "sage",
-    label: "Sage",
-    description: "Calm natural greens",
+    name: "forestNight",
+    label: "Forest Night",
+    description: "Emerald & coral darks",
   },
   {
-    name: "lavender",
-    label: "Lavender",
-    description: "Dreamy soft purples",
+    name: "bubblegum",
+    label: "Bubblegum",
+    description: "Pink, mint & sky",
   },
   {
-    name: "sunset",
-    label: "Sunset",
-    description: "Warm peachy tones",
+    name: "dusk",
+    label: "Dusk",
+    description: "Pink & blue darks",
   },
 ];
 
