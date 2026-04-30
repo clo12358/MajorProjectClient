@@ -7,7 +7,6 @@ type SymptomItem = {
   rank: number;
   name: string;
   count: number;
-  width: string;
 };
 
 type SymptomsCardProps = {
@@ -16,7 +15,7 @@ type SymptomsCardProps = {
 };
 
 export function SymptomsCard({ title, symptoms }: SymptomsCardProps) {
-  const { themeName, setTheme } = useTheme();
+  const { themeName } = useTheme();
   const theme = Colors[themeName];
 
   const RANK_COLORS = [theme.primary, theme.secondary, theme.accent];

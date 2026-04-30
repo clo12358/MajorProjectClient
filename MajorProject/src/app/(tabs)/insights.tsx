@@ -18,10 +18,10 @@ import { StatCard } from "../../components/custom/stat-card";
 import { SymptomsCard } from "../../components/custom/symptom-stat-card";
 import { Colors } from "../../constants/theme";
 
+// Screen width constants used for chart sizing
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const H_PADDING = 20;
-const CARD_INNER_WIDTH = SCREEN_WIDTH - H_PADDING * 2;
-const CHART_WIDTH = CARD_INNER_WIDTH - 40;
+const CHART_WIDTH = SCREEN_WIDTH - H_PADDING * 2 - 40;
 
 interface Period {
   id: number;
@@ -73,7 +73,6 @@ type SymptomItem = {
   rank: number;
   name: string;
   count: number;
-  width: string;
 };
 
 type ChartPoint = {
@@ -90,24 +89,22 @@ const FEELING_SCORE: Record<string, number> = {
 };
 
 export default function Insights() {
-  const { themeName, setTheme } = useTheme();
+  const { themeName } = useTheme();
   const theme = Colors[themeName];
 
   const [quote, setQuote] = useState("Patterns take time — keep logging.");
-
   const [avgCycleLength, setAvgCycleLength] = useState<string>("—");
   const [avgPeriodLength, setAvgPeriodLength] = useState<string>("—");
   const [topSymptoms, setTopSymptoms] = useState<SymptomItem[]>([]);
-
   const [cycleLengthData, setCycleLengthData] = useState<ChartPoint[]>([]);
   const [periodLengthData, setPeriodLengthData] = useState<ChartPoint[]>([]);
   const [moodData, setMoodData] = useState<ChartPoint[]>([]);
-
   const [showModal, setShowModal] = useState(false);
   const [activeChart, setActiveChart] = useState(0);
 
   const carouselRef = useRef<ScrollView>(null);
 
+  // One-time fetches on mount
   useEffect(() => {
     fetchQuote();
     fetchCycleStats();
@@ -115,18 +112,20 @@ export default function Insights() {
     fetchMoodStats();
   }, []);
 
+  // Fetches cycle and period data and calculates averages and chart points
   async function fetchCycleStats() {
     try {
       const response = await api.get("/cycles");
       const cycles: Cycle[] = response.data ?? [];
 
+      // If no cycles, show the no data modal
       if (cycles.length === 0) {
         setShowModal(true);
         return;
       }
 
+      // Calculate average cycle length from completed cycles
       const cyclesWithLength = cycles.filter((c) => c.cycle_length !== null);
-
       if (cyclesWithLength.length > 0) {
         const total = cyclesWithLength.reduce(
           (sum, c) => sum + (c.cycle_length as number),
@@ -135,6 +134,7 @@ export default function Insights() {
         setAvgCycleLength((total / cyclesWithLength.length).toFixed(1));
       }
 
+      // Calculate period lengths and build chart points
       const periodLengths: number[] = [];
       const periodChartPoints: ChartPoint[] = [];
 
@@ -143,6 +143,7 @@ export default function Insights() {
           if (period.start_date && period.end_date) {
             const start = new Date(period.start_date);
             const end = new Date(period.end_date);
+            // Divide the difference in milliseconds by 1000ms→1s→60m→24h to get days, +1 to include start day
             const days =
               Math.round(
                 (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
@@ -158,13 +159,14 @@ export default function Insights() {
         }
       }
 
+      // Calculate average period length
       if (periodLengths.length > 0) {
         const total = periodLengths.reduce((sum, d) => sum + d, 0);
         setAvgPeriodLength((total / periodLengths.length).toFixed(1));
       }
 
+      // Only show the last 6 periods and cycles on the charts
       setPeriodLengthData(periodChartPoints.slice(-6));
-
       const chartPoints = cyclesWithLength.slice(-6).map((c) => ({
         value: c.cycle_length as number,
         label: new Date(`${c.start_date}T00:00:00`).toLocaleDateString(
@@ -178,11 +180,13 @@ export default function Insights() {
     }
   }
 
+  // Fetches journal entries and maps feelings to numeric scores for the mood chart
   async function fetchMoodStats() {
     try {
       const response = await api.get("/journals");
       const journals: Journal[] = response.data ?? [];
 
+      // Only show the last 6 journal entries on the chart
       const points: ChartPoint[] = journals
         .filter((j) => j.feeling && j.daily_log?.date)
         .reverse()
@@ -201,11 +205,13 @@ export default function Insights() {
     }
   }
 
+  // Fetches all daily logs and counts how many times each symptom has been logged
   async function fetchSymptomStats() {
     try {
       const response = await api.get("/daily-logs");
       const logs: DailyLog[] = response.data ?? [];
 
+      // Count occurrences of each symptom across all logs
       const countMap: Record<string, number> = {};
       for (const log of logs) {
         for (const ds of log.daily_symptoms ?? []) {
@@ -216,6 +222,7 @@ export default function Insights() {
         }
       }
 
+      // Sort by frequency and take the top 3
       const sorted = Object.entries(countMap)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 3);
@@ -225,12 +232,10 @@ export default function Insights() {
         return;
       }
 
-      const maxCount = sorted[0][1];
       const items: SymptomItem[] = sorted.map(([name, count], index) => ({
         rank: index + 1,
         name,
         count,
-        width: `${Math.round((count / maxCount) * 100)}%`,
       }));
 
       setTopSymptoms(items);
@@ -239,6 +244,7 @@ export default function Insights() {
     }
   }
 
+  // Fetches a random quote from the DummyJSON API
   async function fetchQuote() {
     try {
       const randomId = Math.floor(Math.random() * 1385) + 1;
@@ -250,6 +256,7 @@ export default function Insights() {
     }
   }
 
+  // Returns the min and max bounds for a line chart with some padding
   function getLineBounds(data: ChartPoint[]) {
     const values = data.map((d) => d.value);
     return {
@@ -258,11 +265,13 @@ export default function Insights() {
     };
   }
 
+  // Updates the active chart index as the user scrolls the carousel
   function handleCarouselScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
     const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
     setActiveChart(index);
   }
 
+  // Build the list of charts to show, filtering out any with no data
   const charts = [
     {
       title: "Cycle Length Trend",
@@ -286,7 +295,7 @@ export default function Insights() {
 
   return (
     <>
-      {/* No data modal */}
+      {/* No data modal — shown when the user hasn't logged any cycles yet */}
       <Modal
         visible={showModal}
         transparent
@@ -353,7 +362,7 @@ export default function Insights() {
           <StatCard title="Avg Period" value={avgPeriodLength} label="days" />
         </View>
 
-        {/* Quote Card */}
+        {/* Quote card */}
         <View className="mt-5 px-5">
           <QuoteCard quote={quote} />
         </View>
@@ -445,6 +454,7 @@ export default function Insights() {
                           data={chart.data.map((d) => ({
                             value: d.value,
                             label: d.label,
+                            // Colour the bar based on the mood score
                             frontColor:
                               d.value >= 4
                                 ? theme.primary
@@ -488,7 +498,7 @@ export default function Insights() {
               })}
             </ScrollView>
 
-            {/* Dot indicators */}
+            {/* Dot indicators for the carousel */}
             {charts.length > 1 && (
               <View className="flex-row justify-center gap-2 mt-3">
                 {charts.map((_, i) => (
@@ -510,7 +520,7 @@ export default function Insights() {
           </View>
         )}
 
-        {/* Symptoms */}
+        {/* Top symptoms card */}
         {topSymptoms.length > 0 && (
           <View className="mt-5 px-5">
             <SymptomsCard title="Most Logged Symptoms" symptoms={topSymptoms} />
