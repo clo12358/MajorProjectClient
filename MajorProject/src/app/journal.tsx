@@ -9,6 +9,7 @@ import { LargeButton } from "../components/custom/large-button";
 import { MoodCard } from "../components/custom/mood-card";
 import { Colors } from "../constants/theme";
 
+// The shape of a daily log response from the API
 interface DailyLogResponse {
   id: number;
   date?: string;
@@ -21,33 +22,8 @@ interface DailyLogResponse {
   feeling?: string;
 }
 
-interface JournalResponse {
-  id?: number;
-  daily_log_id: number;
-  entry: string;
-  feeling: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-const moodToApiValue: Record<string, string> = {
-  Great: "great",
-  Good: "good",
-  Okay: "okay",
-  Low: "low",
-  Awful: "awful",
-};
-
-const apiValueToMoodLabel: Record<string, string> = {
-  great: "Great",
-  good: "Good",
-  okay: "Okay",
-  low: "Low",
-  awful: "Awful",
-};
-
 export default function Journal() {
-  const { themeName, setTheme } = useTheme();
+  const { themeName } = useTheme();
   const theme = Colors[themeName];
 
   const params = useLocalSearchParams<{ dailyLogId?: string }>();
@@ -57,7 +33,9 @@ export default function Journal() {
   const [dailyLogId, setDailyLogId] = useState<number | null>(null);
   const [loadingLog, setLoadingLog] = useState(true);
   const [savingEntry, setSavingEntry] = useState(false);
+  const [journalDate, setJournalDate] = useState<string | null>(null);
 
+  // The available mood options with their display label and icon
   const moods = [
     { label: "Great", icon: "heart-outline" },
     { label: "Good", icon: "happy-outline" },
@@ -68,7 +46,15 @@ export default function Journal() {
 
   const today = new Date();
 
-  const todayString = useMemo(() => formatDateForApi(today), []);
+  // Format today's date for the API
+  const todayString = useMemo(() => {
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }, []);
+
+  // Format today's date as a readable string — used as fallback if no log date is available
   const formattedToday = useMemo(() => {
     return today.toLocaleDateString("en-GB", {
       weekday: "long",
@@ -78,13 +64,8 @@ export default function Journal() {
     });
   }, []);
 
-  function formatDateForApi(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  }
-
+  // Reads the dailyLogId route param and converts it to a number
+  // Returns null if the param is missing or not a valid number
   function getParamDailyLogId(): number | null {
     const raw = params.dailyLogId;
     if (!raw) return null;
@@ -92,22 +73,7 @@ export default function Journal() {
     return Number.isNaN(parsed) ? null : parsed;
   }
 
-  function extractJournalFromDailyLog(data: DailyLogResponse) {
-    if (data.journal) {
-      return {
-        entry: data.journal.entry ?? "",
-        feeling: data.journal.feeling ?? "good",
-      };
-    }
-    if (typeof data.entry === "string" || typeof data.feeling === "string") {
-      return {
-        entry: data.entry ?? "",
-        feeling: data.feeling ?? "good",
-      };
-    }
-    return null;
-  }
-
+  // Creates or retrieves today's daily log and returns its ID
   async function createOrFetchTodayLog(): Promise<number | null> {
     try {
       const response = await api.post("/daily-logs", { date: todayString });
@@ -119,20 +85,36 @@ export default function Journal() {
     }
   }
 
+  // Fetches the existing journal entry for a given log and pre-fills the form
   async function fetchExistingJournal(logId: number) {
     try {
       const response = await api.get(`/daily-logs/${logId}`);
       const data: DailyLogResponse = response.data;
-      const existingJournal = extractJournalFromDailyLog(data);
-      if (existingJournal) {
-        setEntry(existingJournal.entry);
-        const mappedMood =
-          apiValueToMoodLabel[existingJournal.feeling.toLowerCase()] ?? "Good";
-        setSelectedMood(mappedMood);
-      } else {
-        setEntry("");
-        setSelectedMood("Good");
+
+      // Use the date from the log response to show the correct date in the header
+      if (data.date) {
+        const date = new Date(`${data.date}T00:00:00`);
+        setJournalDate(
+          date.toLocaleDateString("en-GB", {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          }),
+        );
       }
+
+      // Read journal entry and feeling directly from the journal object
+      const existingEntry = data.journal?.entry ?? "";
+      const existingFeeling = data.journal?.feeling ?? null;
+
+      setEntry(existingEntry);
+      // Capitalise the feeling value from the API
+      setSelectedMood(
+        existingFeeling
+          ? existingFeeling.charAt(0).toUpperCase() + existingFeeling.slice(1)
+          : "Good",
+      );
     } catch (error) {
       console.error("Failed to fetch existing journal:", error);
       setEntry("");
@@ -140,9 +122,11 @@ export default function Journal() {
     }
   }
 
+  // Initialises the journal by getting the log ID and fetching any existing entry
   const initialiseJournal = useCallback(async () => {
     setLoadingLog(true);
     try {
+      // Use the log ID from the route param if available, otherwise create/fetch today's log
       let logId = getParamDailyLogId();
       if (!logId) {
         logId = await createOrFetchTodayLog();
@@ -158,53 +142,43 @@ export default function Journal() {
     }
   }, [params.dailyLogId]);
 
+  // Re-initialise the journal every time the screen comes into focus
   useFocusEffect(
     useCallback(() => {
       initialiseJournal();
     }, [initialiseJournal]),
   );
 
-  async function saveWithPost(
-    logId: number,
-    payload: { entry: string; feeling: string },
-  ) {
-    return api.post(`/daily-logs/${logId}/journal`, payload);
-  }
-
-  async function saveWithPut(
-    logId: number,
-    payload: { entry: string; feeling: string },
-  ) {
-    return api.put(`/daily-logs/${logId}/journal`, payload);
-  }
-
+  // Saves the journal entry, tries POST first, falls back to PUT if entry already exists
   async function handleSave() {
     if (!dailyLogId || !entry.trim()) return;
 
-    const apiFeeling = moodToApiValue[selectedMood];
-    if (!apiFeeling) return;
-
-    const payload = { entry: entry.trim(), feeling: apiFeeling };
+    // Convert the selected mood label to lowercase for the API
+    const payload = {
+      entry: entry.trim(),
+      feeling: selectedMood.toLowerCase(),
+    };
 
     setSavingEntry(true);
     try {
-      let response;
       try {
-        response = await saveWithPost(dailyLogId, payload);
+        // Try POST first, will fail if a journal entry already exists for this log
+        await api.post(`/daily-logs/${dailyLogId}/journal`, payload);
       } catch (postError: any) {
         const status = postError.response?.status;
+        // Fall back to PUT if the entry already exists or POST isn't supported
         if (
           status === 404 ||
           status === 405 ||
           status === 409 ||
           status === 422
         ) {
-          response = await saveWithPut(dailyLogId, payload);
+          await api.put(`/daily-logs/${dailyLogId}/journal`, payload);
         } else {
           throw postError;
         }
       }
-
+      // Redirect back to home with a flag to show the success toast
       router.replace({ pathname: "/home", params: { journalSaved: "1" } });
     } catch (error: any) {
       console.error("Journal save error:", error.response?.data ?? error);
@@ -232,8 +206,9 @@ export default function Journal() {
             <Text className="text-2xl font-bold" style={{ color: theme.text }}>
               Journal
             </Text>
+            {/* Show the date of the log being edited, falling back to today */}
             <Text className="text-xs" style={{ color: theme.textSecondary }}>
-              {formattedToday}
+              {journalDate ?? formattedToday}
             </Text>
           </View>
         </View>
